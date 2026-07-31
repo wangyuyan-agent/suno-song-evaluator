@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from click import unstyle
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
@@ -516,11 +517,11 @@ def test_cli_serve_remote_requires_exact_host_and_auth(tmp_path):
     )
 
     assert missing_host.exit_code != 0
-    assert "exact --allowed-host" in missing_host.output
+    assert "exact --allowed-host" in unstyle(missing_host.output)
     assert wildcard.exit_code != 0
-    assert "exact hostnames" in wildcard.output
+    assert "exact hostnames" in unstyle(wildcard.output)
     assert missing_auth.exit_code != 0
-    assert "requires --auth-username" in missing_auth.output
+    assert "requires --auth-username" in unstyle(missing_auth.output)
 
 
 def test_cli_serve_remote_uses_password_file_without_exposing_secret(
