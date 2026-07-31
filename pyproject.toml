@@ -35,7 +35,7 @@ asr = [
   "mlx-whisper>=0.4.3,<0.5; sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
 dev = [
-  "pytest>=8.2,<9",
+  "pytest>=8.2,<10",
   "pytest-cov>=5,<7",
   "ruff>=0.12,<1",
 ]
