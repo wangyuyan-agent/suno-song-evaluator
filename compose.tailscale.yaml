@@ -1,0 +1,10 @@
+# Private-server overlay: publish the app on loopback only and leave the
+# Internet-facing Caddy service disabled. Tailscale Serve terminates HTTPS.
+services:
+  app:
+    ports:
+      - "127.0.0.1:${SONG_EVAL_LOOPBACK_PORT:-8765}:8765"
+
+  caddy:
+    profiles:
+      - public

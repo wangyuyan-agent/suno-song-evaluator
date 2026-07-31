@@ -18,8 +18,12 @@ private Suno metadata in a public issue.
 - Local service mode binds to loopback and trusts only loopback Host headers.
 - Remote binding is rejected unless it is explicitly enabled with an exact
   allowed Host and a password-file-backed administrator account.
-- The supplied Compose deployment publishes only Caddy; the app port remains
+- The base Compose deployment publishes only Caddy; the app port remains
   internal. Caddy provides HTTPS and security headers.
+- The private Compose overlay publishes the app only on host loopback and
+  relies on Tailscale Serve for tailnet-only HTTPS. It must not use Funnel.
+- Linux deployment secrets are root-managed files readable only by the
+  non-root container identity (numeric UID/GID 10001).
 - Artifact, source, reference, and listening-media paths must resolve under
   configured trusted roots. Symlink escapes and historical out-of-root paths
   are rejected.

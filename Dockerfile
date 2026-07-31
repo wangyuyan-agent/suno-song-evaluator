@@ -3,7 +3,7 @@ FROM ghcr.io/astral-sh/uv:0.11.32-python3.12-trixie-slim@sha256:519357e414a4240a
 LABEL org.opencontainers.image.title="Suno Song Evaluator" \
       org.opencontainers.image.description="Evidence-first comparison and release support for Suno song candidates" \
       org.opencontainers.image.source="https://github.com/wangyuyan-agent/suno-song-evaluator" \
-      org.opencontainers.image.version="0.2.0" \
+      org.opencontainers.image.version="0.2.1" \
       org.opencontainers.image.licenses="MIT"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

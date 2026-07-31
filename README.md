@@ -38,6 +38,8 @@ post-production.
   OpenAI-compatible LLM narration;
 - an authenticated Docker Compose server deployment with exact Host validation,
   Caddy automatic HTTPS, secret files, and an unexposed application port;
+- a Tailscale-only Compose overlay that binds the app to host loopback and uses
+  Tailscale Serve for tailnet-scoped HTTPS without starting Caddy;
 - a capability-aware Suno Pro, non-Studio structural-gesture plan that keeps
   the selected target as the edit parent and never silently reattaches the
   reference as a Sample.
@@ -126,38 +128,50 @@ For a Crop whose full parent is absent from the playlist, repeat
 `--parent CHILD_CLIP_ID=PARENT_CLIP_ID_OR_PATH_OR_URL`. The relationship remains
 unknown unless captured by the platform or explicitly declared.
 
-## Docker and server deployment
+## Deployment
 
-The supplied Compose stack is the supported server deployment:
+The repository supports four execution paths:
+
+| Path | Intended use | Network boundary |
+| --- | --- | --- |
+| native `uv` | local development or a host-managed service | loopback by default |
+| direct `docker run` | low-level container integration | loopback-only example |
+| Compose + Tailscale Serve | recommended private VPS deployment | tailnet-only HTTPS |
+| Compose + Caddy | Internet-facing server with real DNS | public HTTPS on 80/443 |
+
+For a private Linux server already joined to your tailnet:
 
 ```bash
 cp .env.example .env
-mkdir -p audio secrets
-chmod 700 secrets
-
-# Edit APP_DOMAIN and SONG_EVAL_USERNAME in .env, then create the secret
-# without putting it in Compose YAML or an environment variable.
-read -r -s SONG_EVAL_PASSWORD
-printf '%s' "$SONG_EVAL_PASSWORD" > secrets/admin_password.txt
-unset SONG_EVAL_PASSWORD
-chmod 600 secrets/admin_password.txt
-
-docker compose config --quiet
-docker compose up --build -d
+# Set APP_DOMAIN and SONG_EVAL_USERNAME in .env. The helper prepares the
+# default ./audio and ./secrets paths.
+sudo ./deploy/prepare-linux.sh
+docker compose -f compose.yaml -f compose.tailscale.yaml config --quiet
+docker compose -f compose.yaml -f compose.tailscale.yaml up --build -d
+sudo tailscale serve --bg --https=8444 http://127.0.0.1:8765
 ```
 
-The image installs FFmpeg/ffprobe and libsndfile automatically during build,
-then reproduces Python dependencies from `uv.lock`. Caddy is the only published
-service and obtains HTTPS certificates for `APP_DOMAIN`; the application port
-remains internal. Authentication is deliberately a single administrator
-account—there is no registration, RBAC, password recovery, or multi-tenant
-isolation in v0.2.0. Remote mode rejects passwords shorter than 16 characters;
-an Internet-facing deployment should also use a firewall allowlist, VPN, or
-identity-aware proxy.
+The application is published only on `127.0.0.1`; Tailscale Serve provides
+tailnet-only HTTPS. Use a different Serve HTTPS port when the server already
+uses 443, and never enable Funnel for this topology. The base Compose stack is
+the supported Caddy/Internet topology; it keeps the app port internal and
+publishes only Caddy.
 
-See [`docs/deployment.md`](docs/deployment.md) for DNS, secrets, LLM, backup,
-upgrade, and threat-boundary details. See [`SECURITY.md`](SECURITY.md) before
-placing the service on a network.
+The Linux preparation script creates a random administrator password when one
+does not exist, never prints it, and sets the numeric UID/GID permissions needed
+by the non-root container. `deploy/verify-deployment.sh` checks health, the
+unauthenticated boundary, and authenticated access without placing the password
+in process arguments or environment variables.
+
+The image downloads FFmpeg/ffprobe and libsndfile during build, then reproduces
+Python dependencies from `uv.lock`. Authentication is deliberately a single
+administrator account—there is no registration, RBAC, password recovery, MFA,
+brute-force rate limiting, or multi-tenant isolation in v0.2.1.
+
+See [`docs/deployment.md`](docs/deployment.md) for commands for all four paths,
+Caddy isolation smoke tests, DNS, secrets, LLM, backup, upgrade, and threat
+boundaries. See [`SECURITY.md`](SECURITY.md) before placing the service on a
+network.
 
 ## Audio analysis stack
 
