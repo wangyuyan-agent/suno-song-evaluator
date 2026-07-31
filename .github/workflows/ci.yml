@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.32"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --locked --extra dev
+      - name: Format
+        run: uv run ruff format --check src tests
+      - name: Lint
+        run: uv run ruff check src tests
+      - name: JavaScript syntax
+        run: |
+          node --check src/songeval/web/app.js
+          node --check design/claude/support.js
+      - name: Tests
+        run: >-
+          uv run pytest -q
+          --ignore=tests/test_spring_e2e.py
+          --ignore=tests/test_seventeen_e2e.py
+      - name: Build package
+        if: matrix.python-version == '3.12'
+        run: uv build
+
+  container:
+    name: Container build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build image
+        run: docker build --tag suno-song-evaluator:ci .

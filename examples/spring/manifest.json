@@ -1,0 +1,666 @@
+{
+  "schema_version": "1",
+  "project_id": "spring-2026",
+  "title": "《春》候选发布评估",
+  "briefs": [
+    {
+      "id": "brief_spring_v1_4_reference",
+      "project_id": "spring-2026",
+      "version": "v1.4-reference",
+      "lyrics": "一句也不成句\n树下那个人\n立过整个花期\n一枝也没折\n雨落得慢",
+      "style": null,
+      "exclude": null,
+      "model_name": null,
+      "model_version": null,
+      "raw_sliders": {},
+      "duration_intent": "16.36 second crop used as a reference, not a target song",
+      "requirements": [],
+      "field_provenance": {
+        "lyrics": {
+          "provenance": "declared",
+          "confidence": "medium",
+          "source": "user-provided reference discussion",
+          "note": "fragment starts in Bridge and ends in an incomplete Chorus phrase"
+        }
+      },
+      "created_at": "2026-07-28T00:00:00Z"
+    },
+    {
+      "id": "brief_spring_v1_6",
+      "project_id": "spring-2026",
+      "version": "v1.6",
+      "lyrics": "[Intro] [instrumental, nylon guitar and room tone only, no vocals]\n\n[Verse 1]\n柳先黄\n黄足三日      才肯透一点绿\n远望成烟\n近看      不过几缕\n\n柔条垂下\n把风也分得极细\n落了一夜的雨\n荫下那一方      替谁空着      竟未湿\n\n[Pre-Chorus]\n等      也是一种绿\n不响\n也不停\n凡要绿的      都先垂下来      试过一遍\n\n[Chorus]\n雨落得慢      柳也绿得慢\n欲折的手      悬过千遍\n今日垂到你手边\n你别急着选\n由它在风里      再浮一晚\n\n[Verse 2]\n夜里的黑不算黑\n是研开又搁久的一池\n灯明一息      暗一息\n照得手背      浮起一层青意\n\n青      灰      墨\n三色叠着\n最上那层      还湿\n\n纸上斜行几字\n写到一半      笔就悬在那里\n\n窗台那只瓶\n插的仍是去年的一枝\n枯了许久\n\n我没换\n\n[Chorus]\n雨落得慢      柳也绿得慢\n欲折的手      悬过千遍\n今日垂到你手边\n你别急着选\n由它在风里      再浮一晚\n\n[Bridge]\n满树的叶      像新写下的字\n一片压着一片\n风一翻      便翻过一页\n\n已读过几场雨\n一句也不成句\n\n树下那个人\n立过整个花期\n一枝也没折\n\n[Chorus] [more open, slightly fuller]\n雨落得慢      柳也绿得慢\n欲折的手      悬过千遍\n今日垂到我肩\n我没有选\n它就绿到      我看不见\n\n[Outro] [dry vocal, unresolved, no final cadence]\n它仍在垂\n雨仍在落\n这一树      一枝未少\n树下      立过一个人",
+      "style": "quiet Mandarin ballad, no drums, no percussion at all, sparse solo guqin with slow slides and harmonics, low breathy xiao flute entering only in the final third, soft nylon-string guitar arpeggios in the background, upright bass played high and very sparse, close-miked female alto singing low in chest voice, no head voice, tessitura A3 to E4 in verses, restrained unsweetened delivery, no vibrato, pentatonic yu mode in A, 68 BPM, wide reverb on instruments only, dry vocal, still, ending unresolved with no final cadence, lots of silence",
+      "exclude": null,
+      "model_name": "chirp-fenix",
+      "model_version": "v5.5",
+      "raw_sliders": {},
+      "duration_intent": "complete song; Crop must end after the intended unresolved Outro",
+      "requirements": [
+        {
+          "id": "lyrics_burden_lines",
+          "label": "Frozen burden-bearing lyric lines",
+          "value": ["等 也是一种绿", "欲折的手 悬过千遍", "一枝也没折"],
+          "hard": true,
+          "burden_bearing": true,
+          "provenance": {
+            "provenance": "declared",
+            "confidence": "high",
+            "source": "user brief"
+          }
+        },
+        {
+          "id": "no_drums",
+          "label": "No drums or percussion",
+          "value": true,
+          "hard": true,
+          "provenance": {
+            "provenance": "captured",
+            "confidence": "high",
+            "source": "Suno public tags"
+          }
+        }
+      ],
+      "field_provenance": {
+        "lyrics": {
+          "provenance": "captured",
+          "confidence": "high",
+          "source": "Suno public clip metadata.prompt"
+        },
+        "style": {
+          "provenance": "captured",
+          "confidence": "high",
+          "source": "Suno public clip metadata.tags"
+        },
+        "exclude": {
+          "provenance": "unknown",
+          "confidence": "indeterminate",
+          "source": "not exposed on the cropped public clip"
+        }
+      },
+      "created_at": "2026-07-27T12:54:37.419Z"
+    },
+    {
+      "id": "brief_spring_v2_0",
+      "project_id": "spring-2026",
+      "version": "v2.0-cover-v1.6",
+      "lyrics": "[Intro] [instrumental, nylon guitar and room tone only, no vocals]\n\n[Verse 1]\n柳先黄\n黄足三日      才肯透一点绿\n远望成烟\n近看      不过几缕\n\n柔条垂下\n把风也分得极细\n落了一夜的雨\n荫下那一方      替谁空着      竟未湿\n\n[Pre-Chorus]\n等      也是一种绿\n不响\n也不停\n凡要绿的      都先垂下来      试过一遍\n\n[Chorus]\n雨落得慢      柳也绿得慢\n欲折的手      悬过千遍\n今日垂到你手边\n你别急着选\n由它在风里      再浮一晚\n\n[Verse 2]\n夜里的黑不算黑\n是研开又搁久的一池\n灯明一息      暗一息\n照得手背      浮起一层青意\n\n青      灰      墨\n三色叠着\n最上那层      还湿\n\n纸上斜行几字\n写到一半      笔就悬在那里\n\n窗台那只瓶\n插的仍是去年的一枝\n枯了许久\n\n我没换\n\n[Chorus]\n雨落得慢      柳也绿得慢\n欲折的手      悬过千遍\n今日垂到你手边\n你别急着选\n由它在风里      再浮一晚\n\n[Bridge]\n满树的叶      像新写下的字\n一片压着一片\n风一翻      便翻过一页\n\n已读过几场雨\n一句也不成句\n\n树下那个人\n立过整个花期\n一枝也没折\n\n[Chorus] [more open, slightly fuller]\n雨落得慢      柳也绿得慢\n欲折的手      悬过千遍\n今日垂到我肩\n我没有选\n它就绿到      我看不见\n\n[Outro] [dry vocal, unresolved, no final cadence]\n它仍在垂\n雨仍在落\n这一树      一枝未少\n树下      立过一个人",
+      "style": "quiet Mandarin ballad, no drums, no percussion at all, sparse solo guqin with slow slides and harmonics, low breathy xiao flute entering only in the final third, soft nylon-string guitar arpeggios in the background, upright bass played high and very sparse, close-miked female alto singing low in chest voice, no head voice, tessitura A3 to E4 in verses, restrained unsweetened delivery, no vibrato, pentatonic yu mode in A, 68 BPM, wide reverb on instruments only, dry vocal, still, ending unresolved with no final cadence, lots of silence",
+      "exclude": "drums, percussion, drum machine, beat, shaker, tambourine, handclaps, male vocals, mixed male and female vocals, duet, choir, backing harmonies, doubled vocals, children's voices, child singing, cutesy vocals, girly vocals, sweet idol pop vocals, high breathy anime voice, whispery kawaii vocals, ornate melismatic vocals, heavy vibrato, head voice, whistle register, opera vocal, xiqu vocal, guzheng, guzheng glissando, dizi, erhu, pipa tremolo, autotune, EDM, trap, orchestral swell, cinematic strings, anthemic, bright, upbeat, rain sounds, nature sounds, field recording, ambient sfx, thunder, water sounds, music box, glockenspiel, celesta, big final chord, ritardando ending",
+      "model_name": "chirp-fenix",
+      "model_version": "v5.5",
+      "raw_sliders": {
+        "style_weight": 0.85,
+        "weirdness_constraint": 0.25
+      },
+      "duration_intent": "complete, restrained song with an unresolved ending",
+      "requirements": [
+        {
+          "id": "lyrics_burden_lines",
+          "label": "Frozen burden-bearing lyric lines",
+          "value": ["等 也是一种绿", "欲折的手 悬过千遍", "一枝也没折"],
+          "hard": true,
+          "burden_bearing": true,
+          "provenance": {
+            "provenance": "declared",
+            "confidence": "high",
+            "source": "user brief"
+          }
+        },
+        {
+          "id": "no_drums",
+          "label": "No drums or percussion",
+          "value": true,
+          "hard": true,
+          "provenance": {
+            "provenance": "captured",
+            "confidence": "high",
+            "source": "Suno public metadata.tags and negative_tags"
+          }
+        },
+        {
+          "id": "female_alto_chest_voice",
+          "label": "Low female alto, chest voice, no head voice",
+          "value": true,
+          "hard": true,
+          "provenance": {
+            "provenance": "captured",
+            "confidence": "high",
+            "source": "Suno public metadata.tags and negative_tags"
+          }
+        },
+        {
+          "id": "unresolved_ending",
+          "label": "No final cadence",
+          "value": true,
+          "hard": false,
+          "provenance": {
+            "provenance": "captured",
+            "confidence": "high",
+            "source": "Suno public metadata.tags"
+          }
+        }
+      ],
+      "field_provenance": {
+        "lyrics": {
+          "provenance": "captured",
+          "confidence": "high",
+          "source": "Suno public clip metadata.prompt"
+        },
+        "style": {
+          "provenance": "captured",
+          "confidence": "high",
+          "source": "Suno public clip metadata.tags"
+        },
+        "exclude": {
+          "provenance": "captured",
+          "confidence": "high",
+          "source": "Suno public clip metadata.negative_tags"
+        },
+        "raw_sliders": {
+          "provenance": "captured",
+          "confidence": "high",
+          "source": "Suno public clip metadata.control_sliders"
+        }
+      },
+      "created_at": "2026-07-28T09:36:33.838Z"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source_spring_v1_6_full",
+      "project_id": "spring-2026",
+      "kind": "cover_source",
+      "title": "春-正式候选-v1.6 full",
+      "platform_id": "14c15bf7-0ea1-444a-bca5-bf0bd0c1c301",
+      "url": "https://suno.com/s/CvGD7BRD3jzZDnEE",
+      "local_path": null,
+      "file_sha256": null,
+      "acquisition_path": "unknown",
+      "provenance": {
+        "provenance": "declared",
+        "confidence": "high",
+        "source": "user-provided Suno link"
+      },
+      "raw_payload": {
+        "capture_scope": "identity_and_url_only",
+        "public_duration_s": 479.2
+      },
+      "created_at": "2026-07-27T00:00:00Z"
+    },
+    {
+      "id": "source_spring_v1_4_reference",
+      "project_id": "spring-2026",
+      "kind": "sample",
+      "title": "春-正式候选-v1.4-片段",
+      "platform_id": "b18598f1-88be-4503-bdd0-dd693a2c3ea0",
+      "url": "https://suno.com/s/EdsYZWpt2eStliH4",
+      "local_path": "${SPRING_REFERENCE_AUDIO}",
+      "file_sha256": null,
+      "acquisition_path": "user_provided_unknown",
+      "provenance": {
+        "provenance": "declared",
+        "confidence": "high",
+        "source": "user-provided Suno link and local download"
+      },
+      "raw_payload": {
+        "task": "edit_crop",
+        "duration": 16.36,
+        "capture_scope": "identity_and_public_metadata"
+      },
+      "created_at": "2026-07-28T00:00:00Z"
+    }
+  ],
+  "source_assessments": [
+    {
+      "id": "source_assessment_failed_sample_replaced_cover",
+      "project_id": "spring-2026",
+      "original_source_material_id": "source_spring_v1_6_full",
+      "added_source_material_id": "source_spring_v1_4_reference",
+      "generation_event_id": null,
+      "relationship": "replaced",
+      "provenance": {
+        "provenance": "inferred",
+        "confidence": "high",
+        "source": "documented single-source Cover/Audio Upload workflows plus user report",
+        "note": "unchanged lyrics/style/sliders do not imply an unchanged GenerationEvent source"
+      },
+      "evidence": [
+        "The ordinary Cover workflow selects one Library song as its source.",
+        "The ordinary Audio Upload/Sample workflow selects the uploaded audio as its source.",
+        "No ordinary Pro dual-source slot was documented for keeping the Cover source while adding a Sample.",
+        "The result contained reference traits in the wrong place, consistent with global conditioning rather than enforced placement."
+      ],
+      "limitation": "The failed generation IDs and raw payloads were not supplied, so this is inferred rather than captured platform fact.",
+      "created_at": "2026-07-28T00:00:00Z"
+    }
+  ],
+  "generation_events": [
+    {
+      "id": "event_spring_v1_6_full",
+      "project_id": "spring-2026",
+      "brief_id": "brief_spring_v1_6",
+      "source_material_ids": [],
+      "task": "create",
+      "batch_id": null,
+      "raw_metadata": {
+        "capture_scope": "identity_only",
+        "platform_id": "14c15bf7-0ea1-444a-bca5-bf0bd0c1c301"
+      },
+      "parameters": {},
+      "created_at": "2026-07-27T00:00:00Z"
+    },
+    {
+      "id": "event_spring_v1_6_crop",
+      "project_id": "spring-2026",
+      "brief_id": "brief_spring_v1_6",
+      "source_material_ids": ["source_spring_v1_6_full"],
+      "task": "edit_crop",
+      "batch_id": "batch_spring_v1_6_crop",
+      "raw_metadata": {
+        "type": "edit_crop",
+        "duration": 231.0,
+        "model_name": "chirp-fenix",
+        "major_model_version": "v5.5",
+        "capture_scope": "selected_fields_from_public_playlist_payload"
+      },
+      "parameters": {},
+      "created_at": "2026-07-27T12:54:37.419Z"
+    },
+    {
+      "id": "event_spring_v2_0_cover",
+      "project_id": "spring-2026",
+      "brief_id": "brief_spring_v2_0",
+      "source_material_ids": ["source_spring_v1_6_full"],
+      "task": "cover",
+      "batch_id": "batch_spring_v2_0_cover_20260728T093633Z",
+      "raw_metadata": {
+        "task": "cover",
+        "model_name": "chirp-fenix",
+        "major_model_version": "v5.5",
+        "control_sliders": {
+          "style_weight": 0.85,
+          "weirdness_constraint": 0.25
+        },
+        "capture_scope": "selected_fields_from_public_playlist_payload"
+      },
+      "parameters": {
+        "style_weight": {
+          "value": 0.85,
+          "provenance": {
+            "provenance": "captured",
+            "confidence": "high",
+            "source": "metadata.control_sliders.style_weight"
+          }
+        },
+        "weirdness_constraint": {
+          "value": 0.25,
+          "provenance": {
+            "provenance": "captured",
+            "confidence": "high",
+            "source": "metadata.control_sliders.weirdness_constraint"
+          }
+        }
+      },
+      "created_at": "2026-07-28T09:36:33.838Z"
+    },
+    {
+      "id": "event_spring_v1_4_reference",
+      "project_id": "spring-2026",
+      "brief_id": "brief_spring_v1_4_reference",
+      "source_material_ids": ["source_spring_v1_4_reference"],
+      "task": "edit_crop",
+      "batch_id": null,
+      "raw_metadata": {
+        "task": "edit_crop",
+        "duration": 16.36,
+        "capture_scope": "selected_fields_from_public_share_payload"
+      },
+      "parameters": {},
+      "created_at": "2026-07-28T00:00:00Z"
+    }
+  ],
+  "takes": [
+    {
+      "id": "take_spring_v1_6_full",
+      "project_id": "spring-2026",
+      "generation_event_id": "event_spring_v1_6_full",
+      "batch_index": null,
+      "platform_id": "14c15bf7-0ea1-444a-bca5-bf0bd0c1c301",
+      "created_at": "2026-07-27T00:00:00Z"
+    },
+    {
+      "id": "take_spring_v1_6_cut",
+      "project_id": "spring-2026",
+      "generation_event_id": "event_spring_v1_6_crop",
+      "batch_index": 0,
+      "platform_id": "a6aaa6ea-3ea2-4f3a-8557-bdf991a1ede3",
+      "created_at": "2026-07-27T12:54:37.419Z"
+    },
+    {
+      "id": "take_spring_v2_0_1",
+      "project_id": "spring-2026",
+      "generation_event_id": "event_spring_v2_0_cover",
+      "batch_index": 1,
+      "platform_id": "8747c11b-80e2-4974-b677-ee4bff42a01e",
+      "created_at": "2026-07-28T09:36:33.838Z"
+    },
+    {
+      "id": "take_spring_v2_0_2",
+      "project_id": "spring-2026",
+      "generation_event_id": "event_spring_v2_0_cover",
+      "batch_index": 0,
+      "platform_id": "12d44545-825b-4f92-b297-bbf6c5a684c1",
+      "created_at": "2026-07-28T09:36:33.838Z"
+    },
+    {
+      "id": "take_spring_v1_4_reference",
+      "project_id": "spring-2026",
+      "generation_event_id": "event_spring_v1_4_reference",
+      "batch_index": null,
+      "platform_id": "b18598f1-88be-4503-bdd0-dd693a2c3ea0",
+      "created_at": "2026-07-28T00:00:00Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "artifact_spring_v1_6_full",
+      "project_id": "spring-2026",
+      "take_id": "take_spring_v1_6_full",
+      "title": "春-正式候选-v1.6-full",
+      "platform_id": "14c15bf7-0ea1-444a-bca5-bf0bd0c1c301",
+      "url": "https://suno.com/s/CvGD7BRD3jzZDnEE",
+      "local_path": null,
+      "file_sha256": null,
+      "operation": "raw",
+      "acquisition_path": "unknown",
+      "encoding": {},
+      "platform_reported_duration_s": 479.2,
+      "measured_file_duration_s": null,
+      "duration_mismatch_s": null,
+      "duration_mismatch_tolerance_s": 0.05,
+      "raw_payload": {
+        "analysis_role": "lineage_only",
+        "capture_scope": "identity_and_duration_only"
+      },
+      "created_at": "2026-07-27T00:00:00Z"
+    },
+    {
+      "id": "artifact_spring_v1_6_cut",
+      "project_id": "spring-2026",
+      "take_id": "take_spring_v1_6_cut",
+      "title": "春-正式候选-v1.6-cut",
+      "platform_id": "a6aaa6ea-3ea2-4f3a-8557-bdf991a1ede3",
+      "url": "https://suno.com/song/a6aaa6ea-3ea2-4f3a-8557-bdf991a1ede3",
+      "local_path": "${SPRING_AUDIO_DIR}/春-正式候选-v1.6-cut.wav",
+      "file_sha256": null,
+      "operation": "crop",
+      "acquisition_path": "user_provided_unknown",
+      "encoding": {},
+      "platform_reported_duration_s": 231.0,
+      "measured_file_duration_s": null,
+      "duration_mismatch_s": null,
+      "duration_mismatch_tolerance_s": 0.05,
+      "raw_payload": {
+        "id": "a6aaa6ea-3ea2-4f3a-8557-bdf991a1ede3",
+        "batch_index": 0,
+        "created_at": "2026-07-27T12:54:37.419Z",
+        "model_name": "chirp-fenix",
+        "major_model_version": "v5.5",
+        "metadata": {
+          "type": "edit_crop",
+          "duration": 231.0
+        },
+        "capture_scope": "selected_fields_from_public_playlist_payload"
+      },
+      "created_at": "2026-07-27T12:54:37.419Z"
+    },
+    {
+      "id": "artifact_spring_v2_0_1",
+      "project_id": "spring-2026",
+      "take_id": "take_spring_v2_0_1",
+      "title": "春-正式候选-v2.0-cover1.6-1",
+      "platform_id": "8747c11b-80e2-4974-b677-ee4bff42a01e",
+      "url": "https://suno.com/song/8747c11b-80e2-4974-b677-ee4bff42a01e",
+      "local_path": "${SPRING_AUDIO_DIR}/春-正式候选-v2.0-cover1.6-1.wav",
+      "file_sha256": null,
+      "operation": "cover",
+      "acquisition_path": "user_provided_unknown",
+      "encoding": {},
+      "platform_reported_duration_s": 248.28,
+      "measured_file_duration_s": null,
+      "duration_mismatch_s": null,
+      "duration_mismatch_tolerance_s": 0.05,
+      "raw_payload": {
+        "id": "8747c11b-80e2-4974-b677-ee4bff42a01e",
+        "batch_index": 1,
+        "created_at": "2026-07-28T09:36:33.838Z",
+        "model_name": "chirp-fenix",
+        "major_model_version": "v5.5",
+        "metadata": {
+          "task": "cover",
+          "duration": 248.28,
+          "control_sliders": {
+            "style_weight": 0.85,
+            "weirdness_constraint": 0.25
+          }
+        },
+        "capture_scope": "selected_fields_from_public_playlist_payload"
+      },
+      "created_at": "2026-07-28T09:36:33.838Z"
+    },
+    {
+      "id": "artifact_spring_v2_0_2",
+      "project_id": "spring-2026",
+      "take_id": "take_spring_v2_0_2",
+      "title": "春-正式候选-v2.0-cover1.6-2",
+      "platform_id": "12d44545-825b-4f92-b297-bbf6c5a684c1",
+      "url": "https://suno.com/song/12d44545-825b-4f92-b297-bbf6c5a684c1",
+      "local_path": "${SPRING_AUDIO_DIR}/春-正式候选-v2.0-cover1.6-2.wav",
+      "file_sha256": null,
+      "operation": "cover",
+      "acquisition_path": "user_provided_unknown",
+      "encoding": {},
+      "platform_reported_duration_s": 229.72,
+      "measured_file_duration_s": null,
+      "duration_mismatch_s": null,
+      "duration_mismatch_tolerance_s": 0.05,
+      "raw_payload": {
+        "id": "12d44545-825b-4f92-b297-bbf6c5a684c1",
+        "batch_index": 0,
+        "created_at": "2026-07-28T09:36:33.838Z",
+        "model_name": "chirp-fenix",
+        "major_model_version": "v5.5",
+        "metadata": {
+          "task": "cover",
+          "duration": 229.72,
+          "control_sliders": {
+            "style_weight": 0.85,
+            "weirdness_constraint": 0.25
+          }
+        },
+        "capture_scope": "selected_fields_from_public_playlist_payload"
+      },
+      "created_at": "2026-07-28T09:36:33.838Z"
+    },
+    {
+      "id": "artifact_spring_v1_4_reference",
+      "project_id": "spring-2026",
+      "take_id": "take_spring_v1_4_reference",
+      "title": "春-正式候选-v1.4-片段",
+      "platform_id": "b18598f1-88be-4503-bdd0-dd693a2c3ea0",
+      "url": "https://suno.com/s/EdsYZWpt2eStliH4",
+      "local_path": "${SPRING_REFERENCE_AUDIO}",
+      "file_sha256": null,
+      "operation": "crop",
+      "acquisition_path": "user_provided_unknown",
+      "encoding": {},
+      "platform_reported_duration_s": 16.36,
+      "measured_file_duration_s": null,
+      "duration_mismatch_s": null,
+      "duration_mismatch_tolerance_s": 0.05,
+      "raw_payload": {
+        "analysis_role": "reference_only",
+        "task": "edit_crop",
+        "capture_scope": "identity_and_duration_only"
+      },
+      "created_at": "2026-07-28T00:00:00Z"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_spring_v1_6_full_to_cut",
+      "project_id": "spring-2026",
+      "parent_artifact_id": "artifact_spring_v1_6_full",
+      "child_artifact_id": "artifact_spring_v1_6_cut",
+      "operation": "crop",
+      "generation_event_id": "event_spring_v1_6_crop",
+      "parameters": {
+        "verified_source_offset_s": 0.005,
+        "retained_region_correlation": 0.9983544273571525,
+        "correlation_threshold": 0.995
+      },
+      "source_interval_s": [0.005, 231.005],
+      "deterministic": true,
+      "evidence_inheritance": {
+        "preserved_audio_content": "inherit_preserved_region",
+        "lyrics_in_preserved_region": "inherit_preserved_region",
+        "measured_duration": "recompute",
+        "structure": "recompute",
+        "boundaries": "recompute",
+        "ending": "recompute",
+        "technical_integrity": "recompute"
+      },
+      "provenance": {
+        "provenance": "inferred",
+        "confidence": "high",
+        "source": "local sample-aligned fingerprint",
+        "note": "reverified 2026-07-29 against CDN full v1.6: lag 0.005s, r 0.998354"
+      },
+      "verified_run_id": "cli_verify_crop_20260729",
+      "created_at": "2026-07-29T00:00:00Z"
+    },
+    {
+      "id": "edge_spring_v1_6_full_to_v2_0_1",
+      "project_id": "spring-2026",
+      "parent_artifact_id": "artifact_spring_v1_6_full",
+      "child_artifact_id": "artifact_spring_v2_0_1",
+      "operation": "cover",
+      "generation_event_id": "event_spring_v2_0_cover",
+      "parameters": {},
+      "source_interval_s": null,
+      "deterministic": false,
+      "evidence_inheritance": {
+        "generated_region": "never_inherit",
+        "lyrics": "recompute",
+        "structure": "recompute",
+        "technical_integrity": "recompute"
+      },
+      "provenance": {
+        "provenance": "declared",
+        "confidence": "high",
+        "source": "user lineage and public task=cover"
+      },
+      "verified_run_id": null,
+      "created_at": "2026-07-28T09:36:33.838Z"
+    },
+    {
+      "id": "edge_spring_v1_6_full_to_v2_0_2",
+      "project_id": "spring-2026",
+      "parent_artifact_id": "artifact_spring_v1_6_full",
+      "child_artifact_id": "artifact_spring_v2_0_2",
+      "operation": "cover",
+      "generation_event_id": "event_spring_v2_0_cover",
+      "parameters": {},
+      "source_interval_s": null,
+      "deterministic": false,
+      "evidence_inheritance": {
+        "generated_region": "never_inherit",
+        "lyrics": "recompute",
+        "structure": "recompute",
+        "technical_integrity": "recompute"
+      },
+      "provenance": {
+        "provenance": "declared",
+        "confidence": "high",
+        "source": "user lineage and public task=cover"
+      },
+      "verified_run_id": null,
+      "created_at": "2026-07-28T09:36:33.838Z"
+    }
+  ],
+  "references": [
+    {
+      "id": "reference_spring_v1_4_16s",
+      "project_id": "spring-2026",
+      "source_artifact_id": "artifact_spring_v1_4_reference",
+      "title": "春-正式候选-v1.4-片段",
+      "start_s": 0.0,
+      "end_s": 16.36,
+      "start_boundary": "mid_phrase",
+      "end_boundary": "mid_word",
+      "onset_proximity_start_s": null,
+      "onset_proximity_end_s": null,
+      "vocal_activity_ratio": null,
+      "local_energy_percentile": null,
+      "clean_superset_start_s": null,
+      "clean_superset_end_s": null,
+      "semantic_roles": ["bridge_close", "rest", "lift", "chorus_entry"],
+      "internal_homogeneity": 0.42,
+      "silence_ratio": null,
+      "structure_section_count": 2,
+      "analysis_run_id": "human_structure_annotation_20260728",
+      "evidence": [
+        {
+          "provenance": "declared",
+          "confidence": "high",
+          "source": "user reference and lyric alignment",
+          "note": "starts mid-Bridge and ends after a partial Chorus phrase"
+        }
+      ]
+    }
+  ],
+  "directives": [
+    {
+      "id": "directive_spring_v2_structural_gesture",
+      "project_id": "spring-2026",
+      "brief_id": "brief_spring_v2_0",
+      "reference_segment_id": "reference_spring_v1_4_16s",
+      "preservation_intent": "structural_gesture",
+      "protected_dimensions": ["structure_shape", "energy_envelope"],
+      "target_placement": "section_relative",
+      "placement_enforceable": true,
+      "must_preserve": false,
+      "thresholds": {
+        "min_feature_families": 2,
+        "min_coverage_ratio": null,
+        "min_best_to_second_margin": null,
+        "min_null_margin": null,
+        "min_batch_variance_margin": null,
+        "gesture_valley_duration_s": null,
+        "gesture_min_step_db": null,
+        "gesture_max_delay_s": null,
+        "noise_band": null
+      },
+      "status": "not_evaluated",
+      "abstention_strategy": "The gesture is a preference, not a release gate. Missing thresholds remain indeterminate."
+    }
+  ],
+  "policies": [
+    {
+      "id": "policy_spring_priority_only_v1",
+      "project_id": "spring-2026",
+      "version": "priority-only-v1",
+      "declared_by_user": false,
+      "priority_declared_by_user": true,
+      "axis_priority": ["compliance", "craft", "release_readiness", "distinctiveness"],
+      "compliance_floor": null,
+      "axis_thresholds": [],
+      "max_na_ratio": null,
+      "abstention_strategy": null,
+      "gesture_thresholds": null,
+      "created_at": "2026-07-28T00:00:00Z"
+    }
+  ],
+  "defects": []
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f4f2ed">
+  <title>__PAGE_TITLE__</title>
+  <link rel="icon" href="/ui/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/ui/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#app-main">跳到主要内容</a>
+  <div id="app" class="app-shell" aria-busy="true">
+    <nav id="app-nav" class="app-nav" aria-label="主要导航"></nav>
+    <main id="app-main" class="app-main" tabindex="-1">
+      <div class="boot-state" role="status">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>正在读取本地证据…</span>
+      </div>
+    </main>
+  </div>
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+  <script id="app-bootstrap" type="application/json">__BOOTSTRAP__</script>
+  <script src="/ui/app.js" defer></script>
+  <noscript>此本地复核界面需要启用 JavaScript；分析和报告 CLI 不受影响。</noscript>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "project_id": "spring-2026",
+  "directive_id": "directive_spring_v2_structural_gesture",
+  "target_artifact_id": "artifact_spring_v2_0_1",
+  "operation": "replace_section",
+  "objective": "Preserve v2.0-1 and recreate only the Bridge-to-Chorus structural gesture.",
+  "source_handling": "do_not_attach_reference_as_sample",
+  "selection_start_rule": "Start at the beginning of the final complete Bridge phrase, no later than 立过整个花期 / 一枝也没折, on a clean bar boundary.",
+  "selection_end_rule": "End after the first complete Chorus phrase, including 雨落得慢 / 柳也绿得慢, on a clean bar boundary.",
+  "frozen_lyrics_excerpt": "立过整个花期\n一枝也没折\n雨落得慢      柳也绿得慢",
+  "prompt": "restrained bridge close, one-beat breath after the last bridge line, immediate chorus entrance, slightly wider chest-register melody and slightly fuller guqin/guitar texture, same female alto identity, same tempo, dry vocal, no instrumental detour",
+  "takes_per_batch": 2,
+  "max_batches": 2,
+  "rejection_conditions": [
+    "wrong, missing, reordered, or unintelligible frozen lyric",
+    "mid-line hard cut or obvious edit seam",
+    "unexpected vocalist or vocal-register identity change",
+    "long instrumental detour before Chorus",
+    "new drums or percussion that violate the Brief",
+    "surrounding protected target material regresses"
+  ],
+  "fallback_artifact_id": "artifact_spring_v2_0_1",
+  "exact_retention_claimed": false,
+  "external_postproduction_required": false
+}

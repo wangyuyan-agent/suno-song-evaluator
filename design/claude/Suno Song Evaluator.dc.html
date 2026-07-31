@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet"><style>
+:root{--ac:#1B49C8;--ac-soft:rgba(27,73,200,.07);--ac-line:rgba(27,73,200,.30)}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#F4F2EE;color:#171613;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI","Noto Sans SC","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--ac);text-decoration:none}
+a:hover{color:#12308A;text-decoration:underline}
+button{font:inherit;color:inherit;background:none;border:0;margin:0;padding:0;cursor:pointer}
+input{font:inherit}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:3px}
+::selection{background:rgba(27,73,200,.16)}
+@keyframes sse-fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes sse-pulse{0%,100%{opacity:.35}50%{opacity:.9}}
+.sse-scr{animation:sse-fade .22s cubic-bezier(.2,.7,.3,1) both}
+.sse-nav:hover{background:rgba(23,22,19,.045)}
+.sse-row:hover{background:rgba(23,22,19,.028)}
+.sse-chip:hover{border-color:rgba(23,22,19,.34)}
+.sse-dchip:hover{border-color:rgba(255,255,255,.40)}
+.sse-btn:hover{background:rgba(23,22,19,.05)}
+.sse-dbtn:hover{background:rgba(255,255,255,.08)}
+.sse-sc::-webkit-scrollbar{width:9px;height:9px}
+.sse-sc::-webkit-scrollbar-thumb{background:rgba(23,22,19,.20);border-radius:9px;border:3px solid transparent;background-clip:content-box}
+.sse-dsc::-webkit-scrollbar{width:9px}
+.sse-dsc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.24);border-radius:9px;border:3px solid transparent;background-clip:content-box}
+.sse-tip{position:relative}
+.sse-tip>span[data-tip]{opacity:0;transform:translateY(2px);transition:opacity .14s ease,transform .14s ease;pointer-events:none}
+.sse-tip:hover>span[data-tip],.sse-tip:focus-visible>span[data-tip]{opacity:1;transform:none}
+@media (max-width:1180px){.sse-two{grid-template-columns:1fr !important}.sse-rail{width:76px !important}.sse-rail [data-rlabel]{display:none !important}.sse-rail [data-rblock]{display:none !important}}
+@media (max-width:900px){.sse-players{grid-template-columns:1fr !important}.sse-grid2{grid-template-columns:1fr !important}.sse-hd{flex-wrap:wrap;gap:14px}.sse-rowg{grid-template-columns:20px minmax(0,1fr) 74px !important}.sse-rowg [data-col3]{display:none !important}.sse-lyr{grid-template-columns:22px minmax(0,1fr) !important}}
+@media (max-width:760px){.sse-rail{position:fixed !important;z-index:40;height:100dvh}.sse-main{padding-left:76px !important}.sse-pad{padding-left:20px !important;padding-right:20px !important}}
+</style></helmet>
+
+<div style="display:flex;align-items:stretch;min-height:100vh;background:#F4F2EE">
+
+<aside class="sse-rail" style="width:236px;flex:none;background:#EFECE6;border-right:1px solid rgba(23,22,19,.10);display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
+  <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:10px">
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="1.5" y="1.5" width="19" height="19" rx="5" fill="none" stroke="#171613" stroke-width="1.2"></rect><path d="M6 14.5V11M9 15.5V7.5M12 13V9.5M15.5 16V6.5" stroke="#171613" stroke-width="1.6" stroke-linecap="round"></path></svg>
+    <div data-rlabel="1" style="display:flex;flex-direction:column;gap:1px">
+      <span style="font-size:13px;font-weight:600;letter-spacing:-.01em">歌曲评估</span>
+      <span style="font-size:10px;letter-spacing:.10em;text-transform:uppercase;color:rgba(23,22,19,.64)">Song Evaluator</span>
+    </div>
+  </div>
+
+  <nav style="display:flex;flex-direction:column;gap:2px;padding:0 10px" aria-label="主导航">
+    <button class="sse-nav" aria-label="项目总览" aria-current="{{ currentOverview }}" onClick="{{ goOverview }}" style="{{ navOverview }}">
+      <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true" style="flex:none"><rect x="1" y="1.5" width="5" height="5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.1"></rect><rect x="8.5" y="1.5" width="5" height="5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.1"></rect><rect x="1" y="8.5" width="12.5" height="5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.1"></rect></svg>
+      <span data-rlabel="1" style="display:flex;flex-direction:column;gap:1px;text-align:left"><span style="font-size:13px;font-weight:500">项目总览</span><span style="font-size:10px;letter-spacing:.06em;color:rgba(23,22,19,.64)">《十七》</span></span>
+    </button>
+    <button class="sse-nav" aria-label="盲听工作台" aria-current="{{ currentBlind }}" onClick="{{ goBlind }}" style="{{ navBlind }}">
+      <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true" style="flex:none"><path d="M1 9.5V5.5M4 12V3M7.5 10.5V4.5M11 13V2M14 8.5V6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path></svg>
+      <span data-rlabel="1" style="display:flex;flex-direction:column;gap:1px;text-align:left"><span style="font-size:13px;font-weight:500">盲听工作台</span><span style="font-size:10px;letter-spacing:.06em;color:rgba(23,22,19,.64)">身份隐藏</span></span>
+    </button>
+    <button class="sse-nav" aria-label="具名复核" aria-current="{{ currentNamed }}" onClick="{{ goNamed }}" style="{{ navNamed }}">
+      <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true" style="flex:none"><rect x="2" y="1.5" width="11" height="12" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.1"></rect><path d="M4.6 5h5.8M4.6 7.6h5.8M4.6 10.2h3.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"></path></svg>
+      <span data-rlabel="1" style="display:flex;flex-direction:column;gap:1px;text-align:left"><span style="font-size:13px;font-weight:500">具名复核</span><span style="font-size:10px;letter-spacing:.06em;color:rgba(23,22,19,.64)">《十七》</span></span>
+    </button>
+    <button class="sse-nav" aria-label="参考段计划" aria-current="{{ currentPlan }}" onClick="{{ goPlan }}" style="{{ navPlan }}">
+      <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true" style="flex:none"><path d="M2 7.5h11" stroke="currentColor" stroke-width="1.1"></path><rect x="4.5" y="4.5" width="6" height="6" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.1"></rect><circle cx="2" cy="7.5" r="1.1" fill="currentColor"></circle><circle cx="13" cy="7.5" r="1.1" fill="currentColor"></circle></svg>
+      <span data-rlabel="1" style="display:flex;flex-direction:column;gap:1px;text-align:left"><span style="font-size:13px;font-weight:500">参考段计划</span><span style="font-size:10px;letter-spacing:.06em;color:rgba(23,22,19,.64)">《春》· 独立示例</span></span>
+    </button>
+  </nav>
+
+  <div data-rblock="1" style="margin:24px 16px 0;padding-top:18px;border-top:1px solid rgba(23,22,19,.10)">
+    <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(23,22,19,.64);margin-bottom:9px">当前项目</div>
+    <div style="font-size:16px;font-weight:600;letter-spacing:-.01em;margin-bottom:3px">《十七》</div>
+    <div style="font-size:11.5px;color:rgba(23,22,19,.70);line-height:1.65;font-variant-numeric:tabular-nums">5 条记录 · 时长已测量<br>编辑父级：来源未知</div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:6px">
+      <span style="width:6px;height:6px;border-radius:50%;background:#B4761D;flex:none"></span>
+      <span style="font-size:11.5px;color:rgba(23,22,19,.78)">证据未齐 · 4 / 9 项已获取</span>
+    </div>
+  </div>
+
+  <div data-rblock="1" style="margin-top:auto;padding:18px 16px 20px;border-top:1px solid rgba(23,22,19,.10);font-size:10.5px;line-height:1.7;color:rgba(23,22,19,.64)">
+    本地运行 · 音频不上传<br>不生成总分，不判定胜者<br>未采集的项不作推测
+  </div>
+</aside>
+
+<main class="sse-main" style="flex:1;min-width:0">
+
+<sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+<div class="sse-scr sse-pad" style="padding:36px 40px 64px;max-width:1440px">
+  <header class="sse-hd" style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:20px;border-bottom:1px solid rgba(23,22,19,.12)">
+    <div style="min-width:0">
+      <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(23,22,19,.66);margin-bottom:8px">项目总览 / Project overview</div>
+      <h1 style="margin:0 0 10px;font-size:34px;line-height:1.15;font-weight:600;letter-spacing:-.022em">《十七》</h1>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:rgba(23,22,19,.72);font-variant-numeric:tabular-nums;align-items:center">
+        <span>5 条候选记录</span>
+        <span style="color:rgba(23,22,19,.30)">|</span>
+        <span>来源平台版本：未声明</span>
+        <span style="color:rgba(23,22,19,.30)">|</span>
+        <span>谱系：不可推断（Crop 父级来源未知）</span>
+        <span style="color:rgba(23,22,19,.30)">|</span>
+        <span>文件校验值：未采集</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex:none">
+      <button class="sse-btn" style="height:44px;padding:0 16px;border:1px solid rgba(23,22,19,.18);border-radius:12px;font-size:13px;font-weight:500;background:#FCFBF9;display:flex;align-items:center;gap:8px">
+        <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 1v8M3.4 6l3.1 3 3.1-3M1.5 11.5h10" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"></path></svg>导出证据包
+      </button>
+      <button onClick="{{ goBlind }}" style="height:44px;padding:0 18px;border-radius:12px;background:var(--ac);color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(27,73,200,.30)">
+        进入盲听
+        <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><path d="M2 6.5h8.4M7.4 3.2l3.2 3.3-3.2 3.3" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <section style="margin-top:24px;border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 24px;border-bottom:1px solid rgba(23,22,19,.09);background:#F8F6F2;flex-wrap:wrap">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--ac)"></span>
+      <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(23,22,19,.72);font-weight:500">建议 · 依据已记录的证据</span>
+      <span class="sse-tip" tabindex="0" style="margin-left:auto;font-size:11.5px;color:rgba(23,22,19,.72);cursor:default">建议是怎么来的？
+        <span data-tip="1" style="position:absolute;right:0;top:22px;width:300px;padding:11px 13px;background:#171613;color:#F4F2EE;border-radius:10px;font-size:11.5px;line-height:1.65;z-index:20">建议只引用两类内容：已测量的客观项（此处为时长）与你本人声明过的盲听偏好。工具不计算总分、不排名相似度、不把未采集的项目补成结论。</span>
+      </span>
+    </div>
+    <div class="sse-grid2" style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)">
+      <div style="padding:24px;border-right:1px solid rgba(23,22,19,.10)">
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(23,22,19,.66);margin-bottom:10px">建议发布</div>
+        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <span style="font-size:27px;font-weight:600;letter-spacing:-.02em">Crop 版本</span>
+          <span style="font-size:14px;color:rgba(23,22,19,.76);font-variant-numeric:tabular-nums">17-v9-corp-1 · 3:48</span>
+          <span style="height:22px;padding:0 8px;border:1px solid rgba(180,118,29,.42);background:#FBF7F0;color:#7A4F0F;border-radius:6px;font-size:11px;font-weight:500;display:inline-flex;align-items:center">需要人工确认</span>
+        </div>
+        <ul style="margin:16px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px">
+          <li style="display:flex;gap:10px;font-size:13px;line-height:1.7;color:rgba(23,22,19,.84)"><span style="color:var(--ac);flex:none;margin-top:1px">—</span><span>你声明的盲听偏好：<strong style="font-weight:600">声音曲调饱满温暖</strong>。这是人的听辨声明，不是测量结论。</span></li>
+          <li style="display:flex;gap:10px;font-size:13px;line-height:1.7;color:rgba(23,22,19,.84)"><span style="color:var(--ac);flex:none;margin-top:1px">—</span><span>已记录的操作：<strong style="font-weight:600">Crop</strong>（已声明）。被裁切的父级记录<strong style="font-weight:600">来源未知</strong>，因此不呈现谱系。</span></li>
+          <li style="display:flex;gap:10px;font-size:13px;line-height:1.7;color:rgba(23,22,19,.84)"><span style="color:var(--ac);flex:none;margin-top:1px">—</span><span>已测量：时长 3:48。响度已在盲听中匹配（未记录目标数值）。</span></li>
+          <li style="display:flex;gap:10px;font-size:13px;line-height:1.7;color:rgba(23,22,19,.78)"><span style="color:#8A5A12;flex:none;margin-top:1px">!</span><span>未采集：结构分段、频谱差异定位、旋律 / 节奏比对来源。这些项不参与建议。</span></li>
+        </ul>
+      </div>
+      <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(23,22,19,.66)">备选顺序 · 按已记录偏好排列</div>
+        <div style="display:flex;align-items:flex-start;gap:14px;padding-bottom:14px;border-bottom:1px solid rgba(23,22,19,.09)">
+          <span style="font-size:11px;font-weight:600;color:rgba(23,22,19,.62);width:16px;font-variant-numeric:tabular-nums;margin-top:3px">02</span>
+          <div style="min-width:0;flex:1">
+            <div style="font-size:15px;font-weight:500;font-variant-numeric:tabular-nums">17-v9 · 4:34</div>
+            <div style="font-size:12px;color:rgba(23,22,19,.76);line-height:1.6;margin-top:4px">已记录的听辨语句：「很抓人，末段有合唱和声」。未做逐项盲听判断。</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:14px;padding-bottom:14px;border-bottom:1px solid rgba(23,22,19,.09)">
+          <span style="font-size:11px;font-weight:600;color:rgba(23,22,19,.62);width:16px;font-variant-numeric:tabular-nums;margin-top:3px">03</span>
+          <div style="min-width:0;flex:1">
+            <div style="font-size:15px;font-weight:500;font-variant-numeric:tabular-nums">17-v9.3 · 4:17</div>
+            <div style="font-size:12px;color:rgba(23,22,19,.76);line-height:1.6;margin-top:4px">仅记录了排序位置，无听辨语句，无差异测量。</div>
+          </div>
+        </div>
+        <div style="font-size:11.5px;line-height:1.7;color:rgba(23,22,19,.70)">排序只反映已记录的偏好先后，不代表音乐质量高低，也不构成相似度胜负。</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sse-two" style="display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:20px;margin-top:20px;align-items:start">
+
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px 12px;flex-wrap:wrap">
+          <h2 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.005em">证据完整度<span style="font-weight:400;color:rgba(23,22,19,.66);margin-left:8px;font-size:12px">Evidence completeness</span></h2>
+          <span style="font-size:12.5px;color:rgba(23,22,19,.78);font-variant-numeric:tabular-nums">4 项已获取 · 1 项待人工 · 4 项未采集</span>
+        </div>
+        <div style="display:flex;gap:3px;padding:0 20px 14px">
+          <span style="flex:1;height:4px;border-radius:2px;background:var(--ac)"></span><span style="flex:1;height:4px;border-radius:2px;background:var(--ac)"></span><span style="flex:1;height:4px;border-radius:2px;background:var(--ac)"></span><span style="flex:1;height:4px;border-radius:2px;background:var(--ac)"></span><span style="flex:1;height:4px;border-radius:2px;background:rgba(180,118,29,.55)"></span><span style="flex:1;height:4px;border-radius:2px;background:rgba(23,22,19,.14)"></span><span style="flex:1;height:4px;border-radius:2px;background:rgba(23,22,19,.14)"></span><span style="flex:1;height:4px;border-radius:2px;background:rgba(23,22,19,.14)"></span><span style="flex:1;height:4px;border-radius:2px;background:rgba(23,22,19,.14)"></span>
+        </div>
+        <div class="sse-grid2" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid rgba(23,22,19,.09)">
+          <div style="padding:14px 20px;border-right:1px solid rgba(23,22,19,.09);display:flex;flex-direction:column;gap:11px">
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px">时长<span style="height:20px;padding:0 7px;border:1px solid rgba(23,22,19,.16);background:#F4F2EE;border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.80);display:inline-flex;align-items:center;flex:none">已测量</span></span>
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px">响度<span style="height:20px;padding:0 7px;border:1px solid rgba(23,22,19,.16);background:#F4F2EE;border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.80);display:inline-flex;align-items:center;flex:none">已匹配</span></span>
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px">操作声明 Crop<span style="height:20px;padding:0 7px;border:1px solid rgba(23,22,19,.16);background:#F4F2EE;border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.80);display:inline-flex;align-items:center;flex:none">已记录</span></span>
+          </div>
+          <div style="padding:14px 20px;border-right:1px solid rgba(23,22,19,.09);display:flex;flex-direction:column;gap:11px">
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px">歌词行（已冻结）<span style="height:20px;padding:0 7px;border:1px solid rgba(23,22,19,.16);background:#F4F2EE;border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.80);display:inline-flex;align-items:center;flex:none">已记录</span></span>
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px">结尾边界<span style="height:20px;padding:0 7px;border:1px solid rgba(180,118,29,.42);background:#FBF7F0;border-radius:5px;font-size:10.5px;color:#7A4F0F;display:inline-flex;align-items:center;flex:none">需人工</span></span>
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;color:rgba(23,22,19,.72)">Crop 父级<span style="height:20px;padding:0 7px;border:1px dashed rgba(23,22,19,.28);border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.72);display:inline-flex;align-items:center;flex:none">来源未知</span></span>
+          </div>
+          <div style="padding:14px 20px;display:flex;flex-direction:column;gap:11px">
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;color:rgba(23,22,19,.72)">结构分段<span style="height:20px;padding:0 7px;border:1px dashed rgba(23,22,19,.28);border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.72);display:inline-flex;align-items:center;flex:none">未采集</span></span>
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;color:rgba(23,22,19,.72)">差异定位<span style="height:20px;padding:0 7px;border:1px dashed rgba(23,22,19,.28);border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.72);display:inline-flex;align-items:center;flex:none">未采集</span></span>
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;color:rgba(23,22,19,.72)">旋律 / 节奏比对<span style="height:20px;padding:0 7px;border:1px dashed rgba(23,22,19,.28);border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.72);display:inline-flex;align-items:center;flex:none">无来源</span></span>
+          </div>
+        </div>
+      </section>
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px 14px;border-bottom:1px solid rgba(23,22,19,.09);flex-wrap:wrap">
+          <h2 style="margin:0;font-size:14px;font-weight:600">候选记录<span style="font-weight:400;color:rgba(23,22,19,.66);margin-left:8px;font-size:12px">5 条 · 仅时长为测量值</span></h2>
+          <span style="font-size:11.5px;color:rgba(23,22,19,.70)">波形为示意渲染，不作为判断依据</span>
+        </div>
+        <div class="sse-rowg" style="display:grid;grid-template-columns:20px minmax(140px,1.2fr) minmax(140px,1.7fr) 74px minmax(150px,1.3fr);gap:16px;padding:9px 20px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:rgba(23,22,19,.66);border-bottom:1px solid rgba(23,22,19,.09);background:#F8F6F2">
+          <span></span><span>记录 ID</span><span data-col3="1">波形（示意）</span><span style="text-align:right">时长</span><span>已记录的内容</span>
+        </div>
+
+        <div class="sse-row sse-rowg" style="display:grid;grid-template-columns:20px minmax(140px,1.2fr) minmax(140px,1.7fr) 74px minmax(150px,1.3fr);gap:16px;padding:14px 20px;align-items:center;border-bottom:1px solid rgba(23,22,19,.07);border-left:2px solid var(--ac);background:var(--ac-soft)">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--ac)"></span>
+          <span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums">17-v9-corp-1</span><span style="font-size:11px;color:rgba(23,22,19,.72)">操作 Crop · 父级来源未知</span></span>
+          <svg data-col3="1" viewBox="0 0 1000 100" preserveAspectRatio="none" style="width:100%;height:30px" aria-label="示意波形"><path d="{{ wfA }}" stroke="#1B49C8" stroke-width="1.6" vector-effect="non-scaling-stroke" opacity=".80"></path></svg>
+          <span style="font-size:13px;text-align:right;font-variant-numeric:tabular-nums">3:48</span>
+          <span style="font-size:11.5px;color:var(--ac);font-weight:500;line-height:1.55">建议发布 · 偏好：声音曲调饱满温暖</span>
+        </div>
+
+        <div class="sse-row sse-rowg" style="display:grid;grid-template-columns:20px minmax(140px,1.2fr) minmax(140px,1.7fr) 74px minmax(150px,1.3fr);gap:16px;padding:14px 20px;align-items:center;border-bottom:1px solid rgba(23,22,19,.07);border-left:2px solid transparent">
+          <span style="width:7px;height:7px;border-radius:50%;border:1px solid rgba(23,22,19,.34)"></span>
+          <span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:13.5px;font-weight:500;font-variant-numeric:tabular-nums">17-v9</span><span style="font-size:11px;color:rgba(23,22,19,.72)">备选一</span></span>
+          <svg data-col3="1" viewBox="0 0 1000 100" preserveAspectRatio="none" style="width:100%;height:30px" aria-label="示意波形"><path d="{{ wfB }}" stroke="#171613" stroke-width="1.6" vector-effect="non-scaling-stroke" opacity=".42"></path></svg>
+          <span style="font-size:13px;text-align:right;font-variant-numeric:tabular-nums">4:34</span>
+          <span style="font-size:11.5px;color:rgba(23,22,19,.78);line-height:1.55">很抓人，末段有合唱和声</span>
+        </div>
+
+        <div class="sse-row sse-rowg" style="display:grid;grid-template-columns:20px minmax(140px,1.2fr) minmax(140px,1.7fr) 74px minmax(150px,1.3fr);gap:16px;padding:14px 20px;align-items:center;border-bottom:1px solid rgba(23,22,19,.07);border-left:2px solid transparent">
+          <span style="width:7px;height:7px;border-radius:50%;border:1px solid rgba(23,22,19,.34)"></span>
+          <span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:13.5px;font-weight:500;font-variant-numeric:tabular-nums">17-v9.3</span><span style="font-size:11px;color:rgba(23,22,19,.72)">第三</span></span>
+          <svg data-col3="1" viewBox="0 0 1000 100" preserveAspectRatio="none" style="width:100%;height:30px" aria-label="示意波形"><path d="{{ wfC }}" stroke="#171613" stroke-width="1.6" vector-effect="non-scaling-stroke" opacity=".38"></path></svg>
+          <span style="font-size:13px;text-align:right;font-variant-numeric:tabular-nums">4:17</span>
+          <span style="font-size:11.5px;color:rgba(23,22,19,.72);line-height:1.55">无听辨语句</span>
+        </div>
+
+        <div class="sse-row sse-rowg" style="display:grid;grid-template-columns:20px minmax(140px,1.2fr) minmax(140px,1.7fr) 74px minmax(150px,1.3fr);gap:16px;padding:14px 20px;align-items:center;border-bottom:1px solid rgba(23,22,19,.07);border-left:2px solid transparent">
+          <span style="width:7px;height:7px;border-radius:50%;border:1px solid rgba(23,22,19,.26)"></span>
+          <span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:13.5px;font-weight:500;font-variant-numeric:tabular-nums">17-v9</span><span style="font-size:11px;color:rgba(23,22,19,.72)">偏好较低</span></span>
+          <svg data-col3="1" viewBox="0 0 1000 100" preserveAspectRatio="none" style="width:100%;height:30px" aria-label="示意波形"><path d="{{ wfD }}" stroke="#171613" stroke-width="1.6" vector-effect="non-scaling-stroke" opacity=".26"></path></svg>
+          <span style="font-size:13px;text-align:right;font-variant-numeric:tabular-nums">4:15</span>
+          <span style="font-size:11.5px;color:rgba(23,22,19,.72);line-height:1.55">仅记录偏好较低</span>
+        </div>
+
+        <div class="sse-row sse-rowg" style="display:grid;grid-template-columns:20px minmax(140px,1.2fr) minmax(140px,1.7fr) 74px minmax(150px,1.3fr);gap:16px;padding:14px 20px;align-items:center;border-left:2px solid transparent">
+          <span style="width:7px;height:7px;border-radius:50%;border:1px solid rgba(180,118,29,.60)"></span>
+          <span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:13.5px;font-weight:500;font-variant-numeric:tabular-nums">17-v9.3</span><span style="font-size:11px;color:rgba(23,22,19,.72)">结尾待确认</span></span>
+          <svg data-col3="1" viewBox="0 0 1000 100" preserveAspectRatio="none" style="width:100%;height:30px" aria-label="示意波形"><path d="{{ wfE }}" stroke="#171613" stroke-width="1.6" vector-effect="non-scaling-stroke" opacity=".26"></path></svg>
+          <span style="font-size:13px;text-align:right;font-variant-numeric:tabular-nums">3:34</span>
+          <span style="font-size:11.5px;color:#7A4F0F;line-height:1.55">结尾边界需在有声播放中人工确认</span>
+        </div>
+      </section>
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px 14px;border-bottom:1px solid rgba(23,22,19,.09);flex-wrap:wrap">
+          <h2 style="margin:0;font-size:14px;font-weight:600">时间轴差异热点</h2>
+          <span style="height:22px;padding:0 8px;border:1px dashed rgba(23,22,19,.28);border-radius:6px;font-size:11px;color:rgba(23,22,19,.72);display:inline-flex;align-items:center;flex:none">未采集</span>
+        </div>
+        <div style="padding:26px 20px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center">
+          <svg width="132" height="34" viewBox="0 0 132 34" aria-hidden="true"><path d="M2 17h128" stroke="rgba(23,22,19,.16)" stroke-width="1" stroke-dasharray="3 4"></path><rect x="30" y="6" width="26" height="22" rx="4" fill="none" stroke="rgba(23,22,19,.22)" stroke-width="1" stroke-dasharray="3 3"></rect><rect x="76" y="6" width="26" height="22" rx="4" fill="none" stroke="rgba(23,22,19,.22)" stroke-width="1" stroke-dasharray="3 3"></rect></svg>
+          <div style="font-size:13px;font-weight:500">尚未运行差异定位</div>
+          <p style="margin:0;max-width:52ch;font-size:12px;line-height:1.75;color:rgba(23,22,19,.76)">热点需要在两条记录上实际运行差异分析后才会出现。工具不会用「听起来不同」或波形外观推断差异位置与原因。</p>
+          <button class="sse-btn" style="height:44px;padding:0 16px;border:1px solid rgba(23,22,19,.18);border-radius:12px;font-size:13px;background:#fff;margin-top:2px">选择两条记录并运行定位</button>
+        </div>
+      </section>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="padding:16px 20px 12px;border-bottom:1px solid rgba(23,22,19,.09)">
+          <h2 style="margin:0 0 4px;font-size:14px;font-weight:600">四个独立轴</h2>
+          <p style="margin:0;font-size:11.5px;color:rgba(23,22,19,.70);line-height:1.6">各轴不合并、不加权，也不换算成任何总分。</p>
+        </div>
+        <div style="padding:6px 20px 14px">
+          <div style="display:flex;gap:12px;padding:13px 0;border-bottom:1px solid rgba(23,22,19,.07)">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" style="flex:none;margin-top:2px"><circle cx="7" cy="7" r="6" fill="none" stroke="#B4761D" stroke-width="1.2"></circle><circle cx="7" cy="7" r="2" fill="#B4761D"></circle></svg>
+            <div>
+              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:13.5px;font-weight:500">需求匹配</span><span style="font-size:10.5px;letter-spacing:.06em;color:rgba(23,22,19,.66)">REQUIREMENT FIT</span></div>
+              <div style="font-size:12px;color:rgba(23,22,19,.78);margin-top:4px;line-height:1.65">需要人工确认 · 已捕获的需求只有一条听辨偏好，其余未录入。</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;padding:13px 0;border-bottom:1px solid rgba(23,22,19,.07)">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" style="flex:none;margin-top:2px"><circle cx="7" cy="7" r="6" fill="none" stroke="rgba(23,22,19,.40)" stroke-width="1.2" stroke-dasharray="2 2.2"></circle></svg>
+            <div>
+              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:13.5px;font-weight:500">作品完成度</span><span style="font-size:10.5px;letter-spacing:.06em;color:rgba(23,22,19,.66)">COMPLETENESS</span></div>
+              <div style="font-size:12px;color:rgba(23,22,19,.78);margin-top:4px;line-height:1.65">未采集 · 无结构分段数据，工具不以时长推断完成度。</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;padding:13px 0;border-bottom:1px solid rgba(23,22,19,.07)">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" style="flex:none;margin-top:2px"><circle cx="7" cy="7" r="6" fill="none" stroke="#B4761D" stroke-width="1.2"></circle><circle cx="7" cy="7" r="2" fill="#B4761D"></circle></svg>
+            <div>
+              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:13.5px;font-weight:500">直接发布可行性</span><span style="font-size:10.5px;letter-spacing:.06em;color:rgba(23,22,19,.66)">RELEASE READINESS</span></div>
+              <div style="font-size:12px;color:rgba(23,22,19,.78);margin-top:4px;line-height:1.65">需要人工确认 · 结尾边界未确认，旋律 / 节奏无比对来源。</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;padding:13px 0">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" style="flex:none;margin-top:2px"><circle cx="7" cy="7" r="6" fill="none" stroke="rgba(23,22,19,.40)" stroke-width="1.2" stroke-dasharray="2 2.2"></circle></svg>
+            <div>
+              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:13.5px;font-weight:500">差异身份</span><span style="font-size:10.5px;letter-spacing:.06em;color:rgba(23,22,19,.66)">DISTINCT IDENTITY</span></div>
+              <div style="font-size:12px;color:rgba(23,22,19,.78);margin-top:4px;line-height:1.65">未采集 · 盲听仅留下偏好语句，七项逐条判断尚未完成。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style="border:1px solid rgba(180,118,29,.34);border-radius:16px;background:#FBF7F0;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:9px;padding:14px 20px 12px;border-bottom:1px solid rgba(180,118,29,.22)">
+          <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 1.4l5.1 9.2H1.4z" fill="none" stroke="#7A4F0F" stroke-width="1.2" stroke-linejoin="round"></path><path d="M6.5 5v2.4" stroke="#7A4F0F" stroke-width="1.3" stroke-linecap="round"></path><circle cx="6.5" cy="9.1" r=".7" fill="#7A4F0F"></circle></svg>
+          <h2 style="margin:0;font-size:14px;font-weight:600;color:#3A2A0B">不确定性 · 暂不推荐的部分</h2>
+        </div>
+        <div style="padding:4px 20px 16px">
+          <div style="padding:13px 0;border-bottom:1px solid rgba(180,118,29,.18)">
+            <div style="font-size:13px;font-weight:500;color:#3A2A0B">Crop 的父级记录</div>
+            <div style="font-size:12px;color:rgba(58,42,11,.86);line-height:1.7;margin-top:4px">来源未知，除非你显式声明。<strong style="font-weight:600">谱系不做推断</strong>。</div>
+          </div>
+          <div style="padding:13px 0;border-bottom:1px solid rgba(180,118,29,.18)">
+            <div style="font-size:13px;font-weight:500;color:#3A2A0B">旋律 / 节奏是否保留</div>
+            <div style="font-size:12px;color:rgba(58,42,11,.86);line-height:1.7;margin-top:4px">无可比对来源 → <strong style="font-weight:600">暂不推荐</strong>。不给出相似度数值。</div>
+          </div>
+          <div style="padding:13px 0;border-bottom:1px solid rgba(180,118,29,.18)">
+            <div style="font-size:13px;font-weight:500;color:#3A2A0B">结尾边界（17-v9.3 · 3:34）</div>
+            <div style="font-size:12px;color:rgba(58,42,11,.86);line-height:1.7;margin-top:4px">需在<strong style="font-weight:600">有声播放</strong>中由人确认，静音检查不计入。</div>
+          </div>
+          <div style="padding:13px 0 0">
+            <div style="font-size:13px;font-weight:500;color:#3A2A0B">温暖度 · 饱满度 · Hook · 人声身份 · 编曲发展 · 歌词表达 · 结尾完成度</div>
+            <div style="font-size:12px;color:rgba(58,42,11,.86);line-height:1.7;margin-top:4px">测量无法定义这七项，全部由人盲听决定。</div>
+          </div>
+          <button onClick="{{ goNamed }}" style="margin-top:16px;width:100%;height:44px;border:1px solid rgba(138,90,18,.46);border-radius:12px;background:#FFFDF9;font-size:13px;font-weight:500;color:#5E3D0B">前往具名复核</button>
+        </div>
+      </section>
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;padding:16px 20px">
+        <h2 style="margin:0 0 12px;font-size:14px;font-weight:600">来源与可追溯</h2>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:12px;color:rgba(23,22,19,.78);line-height:1.6">
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:rgba(23,22,19,.68)">编辑父级</span><span style="color:#171613">来源未知</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:rgba(23,22,19,.68)">已声明操作</span><span style="color:#171613">Crop</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:rgba(23,22,19,.68)">采样率 / 位深</span><span style="color:#171613">未采集</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:rgba(23,22,19,.68)">响度</span><span style="color:#171613">已匹配（未记录目标值）</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:rgba(23,22,19,.68)">文件位置</span><span style="color:#171613">未记录</span></div>
+        </div>
+        <p style="margin:14px 0 0;font-size:11.5px;line-height:1.7;color:rgba(23,22,19,.70)">这些字段只显示已采集到的内容。空缺不会被补全，也不会以「典型值」代替。</p>
+      </section>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBlind }}" hint-placeholder-val="{{ false }}">
+<div class="sse-scr" style="background:#111113;min-height:100vh;color:#EFEEEA;display:flex;flex-direction:column">
+
+  <div style="display:flex;align-items:center;gap:16px;padding:14px 32px;border-bottom:1px solid rgba(255,255,255,.10);position:sticky;top:0;background:rgba(17,17,19,.94);backdrop-filter:blur(8px);z-index:10;flex-wrap:wrap">
+    <button class="sse-dbtn" onClick="{{ goOverview }}" style="height:32px;padding:0 12px;border:1px solid rgba(255,255,255,.20);border-radius:9px;font-size:12px;display:flex;align-items:center;gap:7px">
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M10 6H2.4M5.2 2.6L2 6l3.2 3.4" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"></path></svg>退出盲听
+    </button>
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <span style="font-size:13px;font-weight:600;letter-spacing:-.005em">盲听工作台</span>
+      <span style="font-size:10.5px;letter-spacing:.12em;color:rgba(255,255,255,.70)">BLIND A / B</span>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:rgba(255,255,255,.80)">
+        <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true"><path d="M1.6 5.8l2.6 2.6L9.4 3" stroke="#8FAAF7" stroke-width="1.5" fill="none" stroke-linecap="round"></path></svg>
+        响度按规则处理
+      </span>
+      <span style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:rgba(255,255,255,.74)">真峰 · 未采集</span>
+      <span class="sse-tip" tabindex="0" style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:rgba(255,255,255,.80);cursor:default">
+        <span style="width:6px;height:6px;border-radius:50%;background:#8FAAF7;animation:sse-pulse 2.4s ease-in-out infinite"></span>身份隐藏
+        <span data-tip="1" style="position:absolute;right:0;top:24px;width:280px;padding:11px 13px;background:#F4F2EE;color:#171613;border-radius:10px;font-size:11.5px;line-height:1.65;z-index:20">标题、记录 ID、版本、谱系与完整时长在本轮全部隐藏。你只能看到相同长度的刺激窗；A / B 每轮随机分配，提交后才解锁对应关系。</span>
+      </span>
+    </div>
+  </div>
+
+  <div style="padding:28px 32px 0">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:16px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:10.5px;letter-spacing:.14em;color:rgba(255,255,255,.72);margin-bottom:8px">刺激窗 00:00 – 00:20 · 两侧等长 · 同步时间轴</div>
+        <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+          <span style="font-size:40px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums">{{ tLabel }}</span>
+          <span style="font-size:14px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums">/ 00:20</span>
+          <span style="font-size:12px;color:rgba(255,255,255,.74);margin-left:6px">正在听 <strong style="font-weight:600;color:#EFEEEA">{{ activeLabel }}</strong></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onClick="{{ setA }}" aria-pressed="{{ activeA }}" style="{{ abBtnA }}">A</button>
+        <button onClick="{{ setB }}" aria-pressed="{{ activeB }}" style="{{ abBtnB }}">B</button>
+      </div>
+    </div>
+
+    <div style="border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#17171A;overflow:hidden">
+      <div style="padding:18px 20px 10px">
+      <div style="position:relative;cursor:pointer" onClick="{{ seekFromClick }}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="{{ laneTagA }}">A</span>
+          <span style="font-size:10.5px;color:rgba(255,255,255,.70);letter-spacing:.06em">身份隐藏 · 响度按规则处理 · 波形为示意渲染</span>
+        </div>
+        <div style="position:relative;height:100px">
+          <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><path d="{{ wfWinA }}" stroke="{{ strokeA }}" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></svg>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin:14px 0 8px">
+          <span style="{{ laneTagB }}">B</span>
+          <span style="font-size:10.5px;color:rgba(255,255,255,.70);letter-spacing:.06em">身份隐藏 · 响度按规则处理 · 波形为示意渲染</span>
+        </div>
+        <div style="position:relative;height:100px">
+          <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><path d="{{ wfWinB }}" stroke="{{ strokeB }}" stroke-width="1.5" vector-effect="non-scaling-stroke"></path></svg>
+        </div>
+        <div style="position:absolute;top:26px;bottom:24px;width:1px;background:#EFEEEA;pointer-events:none;left:{{ playPct }}">
+          <span style="position:absolute;top:-7px;left:-3px;width:7px;height:7px;border-radius:50%;background:#EFEEEA"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:10.5px;color:rgba(255,255,255,.70);font-variant-numeric:tabular-nums"><span>00:00</span><span>00:05</span><span>00:10</span><span>00:15</span><span>00:20</span></div>
+      </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 20px;border-top:1px solid rgba(255,255,255,.10);background:#141417;flex-wrap:wrap">
+        <button class="sse-dbtn" onClick="{{ back5 }}" title="后退 5 秒（←）" aria-label="后退 5 秒" style="width:44px;height:44px;border:1px solid rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center">
+          <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true"><path d="M7.5 3.5V1L3 4l4.5 3V4.5a4 4 0 11-4 4" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"></path></svg>
+        </button>
+        <button onClick="{{ togglePlay }}" title="播放 / 暂停（空格）" style="{{ playBtn }}">{{ playGlyph }}</button>
+        <button class="sse-dbtn" onClick="{{ fwd5 }}" title="前进 5 秒（→）" aria-label="前进 5 秒" style="width:44px;height:44px;border:1px solid rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center">
+          <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true"><path d="M7.5 3.5V1L12 4 7.5 7V4.5a4 4 0 104 4" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"></path></svg>
+        </button>
+        <div style="width:1px;height:28px;background:rgba(255,255,255,.14);margin:0 8px"></div>
+        <button class="sse-dbtn" onClick="{{ toggleLoop }}" style="{{ loopBtn }}">循环 {{ loopLabel }}</button>
+        <button class="sse-dbtn" onClick="{{ addNote }}" style="height:36px;padding:0 12px;border:1px solid rgba(255,255,255,.18);border-radius:10px;font-size:12px;display:flex;align-items:center;gap:7px">
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path></svg>在 {{ tLabel }} 记笔记
+        </button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:14px;font-size:11.5px;color:rgba(255,255,255,.74)">
+          <span>切换保持位置</span>
+          <span style="color:rgba(255,255,255,.28)">|</span>
+          <span>播放次数 · 未记录</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sse-two" style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;padding:20px 32px 120px;align-items:start">
+
+    <section style="border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#17171A;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px 14px;border-bottom:1px solid rgba(255,255,255,.10);flex-wrap:wrap">
+        <div>
+          <h2 style="margin:0 0 4px;font-size:14px;font-weight:600">七项听辨判断</h2>
+          <p style="margin:0;font-size:11.5px;color:rgba(255,255,255,.74)">只记录你的听辨结果与理由，不换算成分数。</p>
+        </div>
+        <span style="font-size:11.5px;color:rgba(255,255,255,.80);font-variant-numeric:tabular-nums">{{ doneCount }} / 7 已判断</span>
+      </div>
+
+      <sc-for list="{{ criteria }}" as="c" hint-placeholder-count="7">
+        <div class="sse-criterion" style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07)">
+          <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+            <span style="font-size:11px;color:rgba(255,255,255,.70);width:16px;flex:none;margin-top:5px;font-variant-numeric:tabular-nums">{{ c.num }}</span>
+            <div style="min-width:140px;flex:1">
+              <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
+                <span style="font-size:14px;font-weight:500">{{ c.zh }}</span>
+                <span style="font-size:10.5px;letter-spacing:.06em;color:rgba(255,255,255,.70)">{{ c.en }}</span>
+              </div>
+              <div style="font-size:11.5px;color:rgba(255,255,255,.74);margin-top:4px;line-height:1.65">{{ c.hint }}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex:none">
+              <button onClick="{{ c.pickA }}" aria-pressed="{{ c.selectedA }}" style="{{ c.styleA }}">A</button>
+              <button onClick="{{ c.pickEq }}" aria-pressed="{{ c.selectedEq }}" style="{{ c.styleEq }}">相当</button>
+              <button onClick="{{ c.pickB }}" aria-pressed="{{ c.selectedB }}" style="{{ c.styleB }}">B</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0 32px">
+            <sc-for list="{{ c.chips }}" as="ch" hint-placeholder-count="4">
+              <button class="sse-dchip" onClick="{{ ch.toggle }}" aria-pressed="{{ ch.selected }}" style="{{ ch.style }}">{{ ch.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+      <section style="border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#17171A;overflow:hidden">
+        <div style="padding:15px 18px 12px;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <h2 style="margin:0;font-size:13px;font-weight:600">进度与校准</h2>
+          <span style="font-size:11px;color:rgba(255,255,255,.70)">无排名 · 无奖励</span>
+        </div>
+        <div style="padding:14px 18px 16px;display:flex;flex-direction:column;gap:13px">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:11.5px;color:rgba(255,255,255,.78);margin-bottom:7px;font-variant-numeric:tabular-nums"><span>本轮判断</span><span>{{ doneCount }} / 7</span></div>
+            <div style="display:flex;gap:3px">
+              <sc-for list="{{ progressCells }}" as="p" hint-placeholder-count="7"><span style="{{ p.style }}"></span></sc-for>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:rgba(255,255,255,.84)"><span style="color:rgba(255,255,255,.72)">响度</span><span>已匹配</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:rgba(255,255,255,.84)"><span style="color:rgba(255,255,255,.72)">A / B 位置</span><span>每轮随机</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:rgba(255,255,255,.84)"><span style="color:rgba(255,255,255,.72)">历史轮次</span><span>未记录</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:rgba(255,255,255,.84)"><span style="color:rgba(255,255,255,.72)">一致性核验</span><span>待运行</span></div>
+          <div style="padding:11px 12px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#1C1C20;font-size:11.5px;line-height:1.7;color:rgba(255,255,255,.78)">当前为演示数据：尚无历史轮次，因此不显示一致性计数。至少完成两轮后才会出现核验结果。</div>
+        </div>
+      </section>
+
+      <section style="border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#17171A;overflow:hidden">
+        <div style="padding:15px 18px 12px;border-bottom:1px solid rgba(255,255,255,.10);display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <h2 style="margin:0;font-size:13px;font-weight:600">时间戳笔记</h2>
+          <span style="font-size:11px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums">{{ noteCount }} 条</span>
+        </div>
+        <div class="sse-dsc" style="max-height:300px;overflow:auto">
+          <sc-for list="{{ notes }}" as="n" hint-placeholder-count="0">
+            <div style="padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;gap:11px">
+              <button onClick="{{ n.seek }}" style="font-size:11.5px;font-variant-numeric:tabular-nums;color:#9DB4F8;flex:none;margin-top:1px">{{ n.time }}</button>
+              <div style="min-width:0">
+                <div style="font-size:10.5px;letter-spacing:.06em;color:rgba(255,255,255,.70);margin-bottom:3px">{{ n.side }}</div>
+                <div style="font-size:12.5px;line-height:1.65;color:rgba(255,255,255,.88)">{{ n.text }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ noNotes }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:26px 18px;text-align:center;font-size:12px;line-height:1.75;color:rgba(255,255,255,.74)">本轮还没有笔记。<br>听到差异时按 <span style="font-family:ui-monospace,Menlo,monospace;color:rgba(255,255,255,.92)">N</span> 记录当前刺激窗时间点。</div>
+        </sc-if>
+      </section>
+
+      <section style="border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#17171A;padding:15px 18px 16px">
+        <h2 style="margin:0 0 11px;font-size:13px;font-weight:600">键盘</h2>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:11.5px;color:rgba(255,255,255,.80)">
+          <div style="display:flex;justify-content:space-between;gap:12px"><span>播放 / 暂停</span><span style="font-family:ui-monospace,Menlo,monospace;color:rgba(255,255,255,.92)">Space</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span>切换 A / B</span><span style="font-family:ui-monospace,Menlo,monospace;color:rgba(255,255,255,.92)">A · B</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span>前后 5 秒</span><span style="font-family:ui-monospace,Menlo,monospace;color:rgba(255,255,255,.92)">← →</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span>循环整个刺激窗</span><span style="font-family:ui-monospace,Menlo,monospace;color:rgba(255,255,255,.92)">L</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span>记笔记</span><span style="font-family:ui-monospace,Menlo,monospace;color:rgba(255,255,255,.92)">N</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span>跳到第 n 项</span><span style="font-family:ui-monospace,Menlo,monospace;color:rgba(255,255,255,.92)">1 – 7</span></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div style="position:sticky;bottom:0;display:flex;align-items:center;gap:20px;padding:14px 32px;border-top:1px solid rgba(255,255,255,.12);background:rgba(20,20,23,.95);backdrop-filter:blur(8px);flex-wrap:wrap">
+    <div style="font-size:12px;color:rgba(255,255,255,.80);line-height:1.65;flex:1;min-width:200px">{{ submitHint }}</div>
+    <div style="display:flex;gap:10px">
+      <button class="sse-dbtn" style="height:44px;padding:0 16px;border:1px solid rgba(255,255,255,.20);border-radius:12px;font-size:13px">保存草稿</button>
+      <button onClick="{{ submitRound }}" style="{{ submitBtn }}">提交本轮并解锁身份</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isNamed }}" hint-placeholder-val="{{ false }}">
+<div class="sse-scr sse-pad" style="padding:36px 40px 88px;max-width:1440px">
+  <header class="sse-hd" style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:20px;border-bottom:1px solid rgba(23,22,19,.12)">
+    <div>
+      <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(23,22,19,.66);margin-bottom:8px">具名复核 / Named review · 《十七》</div>
+      <h1 style="margin:0 0 10px;font-size:30px;line-height:1.2;font-weight:600;letter-spacing:-.022em">身份已解锁，判断由你完成</h1>
+      <p style="margin:0;font-size:13px;color:rgba(23,22,19,.80);line-height:1.7;max-width:66ch">工具只呈现已采集的内容与定位。温暖度、Hook、结尾是否完整、歌词字词是否有缺陷，全部需要你在有声播放中确认。工具不做法律或授权结论。</p>
+    </div>
+    <div style="flex:none;padding:12px 16px;border:1px solid rgba(180,118,29,.34);border-radius:12px;background:#FBF7F0;max-width:280px">
+      <div style="font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:#7A4F0F;font-weight:600;margin-bottom:6px">待你确认</div>
+      <div style="font-size:12.5px;line-height:1.65;color:#3A2A0B">结尾边界 · 歌词行逐句核对 · 采集限制的知晓确认</div>
+    </div>
+  </header>
+
+  <div class="sse-players" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:24px">
+    <section style="border:1px solid var(--ac-line);border-radius:16px;background:#FCFBF9;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px 12px;border-bottom:1px solid rgba(23,22,19,.09);background:var(--ac-soft);flex-wrap:wrap">
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">17-v9-corp-1</span><span style="font-size:12px;color:rgba(23,22,19,.78);font-variant-numeric:tabular-nums">3:48 · 操作 Crop</span></div>
+        <span style="font-size:11px;color:var(--ac);font-weight:500">建议发布</span>
+      </div>
+      <div style="padding:16px 18px">
+        <div style="position:relative;height:66px;cursor:pointer" onClick="{{ seekNamed }}">
+          <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><path d="{{ wfA }}" stroke="#1B49C8" stroke-width="1.5" vector-effect="non-scaling-stroke" opacity=".78"></path></svg>
+          <div style="position:absolute;top:0;bottom:0;width:1px;background:#171613;left:{{ namedPct }}"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button onClick="{{ playNamed }}" aria-label="播放建议版本" style="width:44px;height:44px;border-radius:12px;background:var(--ac);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px">{{ namedGlyph }}</button>
+          <span style="font-size:13px;font-variant-numeric:tabular-nums">{{ namedLabel }} <span style="color:rgba(23,22,19,.70)">/ 3:48</span></span>
+          <div style="margin-left:auto;display:flex;gap:14px;font-size:11.5px;color:rgba(23,22,19,.76)"><span>响度 已匹配</span><span>真峰 未采集</span></div>
+        </div>
+        <div style="margin-top:12px;font-size:11.5px;color:rgba(23,22,19,.72);line-height:1.65">父级记录来源未知 · 波形为示意渲染</div>
+      </div>
+    </section>
+
+    <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px 12px;border-bottom:1px solid rgba(23,22,19,.09);background:#F8F6F2;flex-wrap:wrap">
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:14px;font-weight:600;font-variant-numeric:tabular-nums">17-v9</span><span style="font-size:12px;color:rgba(23,22,19,.78);font-variant-numeric:tabular-nums">4:34</span></div>
+        <span style="font-size:11px;color:rgba(23,22,19,.76);font-weight:500">备选一</span>
+      </div>
+      <div style="padding:16px 18px">
+        <div style="position:relative;height:66px;cursor:pointer" onClick="{{ seekAlt }}">
+          <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><path d="{{ wfB }}" stroke="#171613" stroke-width="1.5" vector-effect="non-scaling-stroke" opacity=".42"></path></svg>
+          <div style="position:absolute;top:0;bottom:0;width:1px;background:rgba(23,22,19,.60);left:{{ altPct }}"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="sse-btn" onClick="{{ playAlt }}" aria-label="播放备选一" style="width:44px;height:44px;border:1px solid rgba(23,22,19,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;background:#fff">{{ altGlyph }}</button>
+          <span style="font-size:13px;font-variant-numeric:tabular-nums;color:rgba(23,22,19,.84)">{{ altLabel }} <span style="color:rgba(23,22,19,.70)">/ 4:34</span></span>
+          <div style="margin-left:auto;display:flex;gap:14px;font-size:11.5px;color:rgba(23,22,19,.76)"><span>响度 已匹配</span><span>真峰 未采集</span></div>
+        </div>
+        <div style="margin-top:12px;font-size:11.5px;color:rgba(23,22,19,.72);line-height:1.65">已记录的听辨语句：很抓人，末段有合唱和声</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="sse-two" style="display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:20px;margin-top:20px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="padding:16px 20px 13px;border-bottom:1px solid rgba(23,22,19,.09);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:14px;font-weight:600">已捕获的需求</h2>
+            <p style="margin:0;font-size:11.5px;color:rgba(23,22,19,.72)">只列出真正被记录下来的需求；未录入的不显示为「已满足」。</p>
+          </div>
+          <span style="font-size:11.5px;color:rgba(23,22,19,.78);font-variant-numeric:tabular-nums">{{ reqDone }} / 4 已由你确认</span>
+        </div>
+        <sc-for list="{{ reqs }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;gap:14px;padding:15px 20px;border-bottom:1px solid rgba(23,22,19,.07);align-items:flex-start;flex-wrap:wrap">
+            <button onClick="{{ r.toggle }}" aria-label="确认此条" aria-pressed="{{ r.selected }}" style="{{ r.box }}">{{ r.mark }}</button>
+            <div style="min-width:180px;flex:1">
+              <div style="font-size:13.5px;font-weight:500;line-height:1.55">{{ r.title }}</div>
+              <div style="font-size:12px;color:rgba(23,22,19,.78);line-height:1.65;margin-top:5px">{{ r.evidence }}</div>
+            </div>
+            <span style="{{ r.tag }}">{{ r.tagText }}</span>
+          </div>
+        </sc-for>
+        <div style="padding:13px 20px 16px;font-size:11.5px;line-height:1.7;color:rgba(23,22,19,.72)">「精确旋律 / 节奏保留」没有比对来源，工具在此弃权：不通过、也不否定。</div>
+      </section>
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="padding:16px 20px 13px;border-bottom:1px solid rgba(23,22,19,.09);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:14px;font-weight:600">歌词行（已冻结）</h2>
+            <p style="margin:0;font-size:11.5px;color:rgba(23,22,19,.72)">已捕获的词句 · ASR 仅作定位，任何字词缺陷都必须由你听辨确认</p>
+          </div>
+          <span style="height:24px;padding:0 9px;border:1px solid rgba(23,22,19,.18);border-radius:7px;font-size:11px;display:inline-flex;align-items:center;gap:6px;color:rgba(23,22,19,.78);flex:none">
+            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.6" y="4.4" width="6.8" height="4.4" rx="1.1" fill="none" stroke="currentColor" stroke-width="1"></rect><path d="M3.4 4.4V3.2a1.6 1.6 0 013.2 0v1.2" fill="none" stroke="currentColor" stroke-width="1"></path></svg>已锁定
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 20px;background:#F8F6F2;border-bottom:1px solid rgba(23,22,19,.09);font-size:11.5px;color:rgba(23,22,19,.78);flex-wrap:wrap">
+          <span style="height:20px;padding:0 7px;border:1px dashed rgba(23,22,19,.28);border-radius:5px;font-size:10.5px;display:inline-flex;align-items:center">ASR 定位未运行</span>
+          <span>时间码未采集，因此不显示行内时间戳。请顺序播放核对。</span>
+          <span style="margin-left:auto;font-variant-numeric:tabular-nums">{{ lyricDone }} / 6 已核对</span>
+        </div>
+        <sc-for list="{{ lyrics }}" as="l" hint-placeholder-count="6">
+          <div class="sse-lyr" style="display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(23,22,19,.07);align-items:center">
+            <span style="font-size:11px;color:rgba(23,22,19,.66);font-variant-numeric:tabular-nums">{{ l.num }}</span>
+            <div style="min-width:0">
+              <div style="font-size:15px;line-height:1.7;letter-spacing:.02em">{{ l.text }}</div>
+              <div style="font-size:11.5px;color:rgba(23,22,19,.72);margin-top:4px;line-height:1.6">{{ l.note }}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex:none">
+              <button onClick="{{ l.ok }}" aria-pressed="{{ l.okSelected }}" style="{{ l.okStyle }}">已核对</button>
+              <button onClick="{{ l.flag }}" aria-pressed="{{ l.flagSelected }}" style="{{ l.flagStyle }}">标记疑问</button>
+            </div>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="border:1px solid rgba(180,118,29,.34);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="padding:16px 20px 13px;border-bottom:1px solid rgba(180,118,29,.22);background:#FBF7F0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:14px;font-weight:600;color:#3A2A0B">结尾边界确认 · 17-v9.3 · 3:34</h2>
+            <p style="margin:0;font-size:11.5px;color:rgba(58,42,11,.86)">必须在有声播放中判断。静音或波形观察都不能替代听辨。</p>
+          </div>
+          <span style="{{ endTag }}">{{ endTagText }}</span>
+        </div>
+        <div style="padding:18px 20px 16px">
+          <div style="display:flex;gap:22px;flex-wrap:wrap;margin-bottom:14px">
+            <span style="display:flex;flex-direction:column;gap:4px"><span style="color:rgba(23,22,19,.70);font-size:11px">记录时长</span><span style="font-size:15px;font-weight:500;font-variant-numeric:tabular-nums">3:34 · 已测量</span></span>
+            <span style="display:flex;flex-direction:column;gap:4px"><span style="color:rgba(23,22,19,.70);font-size:11px">检测边界</span><span style="font-size:15px;font-weight:500">未采集</span></span>
+            <span style="display:flex;flex-direction:column;gap:4px"><span style="color:rgba(23,22,19,.70);font-size:11px">尾部静音</span><span style="font-size:15px;font-weight:500">未采集</span></span>
+            <span style="display:flex;flex-direction:column;gap:4px"><span style="color:rgba(23,22,19,.70);font-size:11px">音频输出</span><span style="{{ audioState }}">{{ audioStateText }}</span></span>
+          </div>
+          <div style="position:relative;height:82px;border:1px solid rgba(23,22,19,.10);border-radius:12px;background:#F8F6F2;overflow:hidden;cursor:pointer" onClick="{{ seekEnd }}">
+            <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><path d="{{ wfEnd }}" stroke="#171613" stroke-width="1.5" vector-effect="non-scaling-stroke" opacity=".55"></path></svg>
+            <div style="position:absolute;top:0;bottom:0;width:1px;background:#171613;left:{{ endPct }}"></div>
+            <span style="position:absolute;left:10px;top:8px;font-size:10.5px;color:rgba(23,22,19,.72)">波形示意 · 未测量边界位置</span>
+            <span style="position:absolute;left:10px;bottom:7px;font-size:10.5px;color:rgba(23,22,19,.70);font-variant-numeric:tabular-nums">3:20</span>
+            <span style="position:absolute;right:10px;bottom:7px;font-size:10.5px;color:rgba(23,22,19,.70);font-variant-numeric:tabular-nums">3:34</span>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+            <button class="sse-btn" onClick="{{ playEnding }}" style="height:44px;padding:0 15px;border:1px solid rgba(23,22,19,.18);border-radius:12px;font-size:13px;background:#fff;display:flex;align-items:center;gap:8px">{{ endGlyph }} 有声播放最后一段</button>
+            <button onClick="{{ confirmEnding }}" aria-pressed="{{ endOkSelected }}" style="{{ endOkBtn }}">确认收束完整</button>
+            <button onClick="{{ flagEnding }}" aria-pressed="{{ endBadSelected }}" style="{{ endBadBtn }}">标记为需修补</button>
+          </div>
+          <p style="margin:12px 0 0;font-size:11.5px;color:rgba(23,22,19,.76);line-height:1.7">{{ endHint }}</p>
+        </div>
+      </section>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="padding:15px 18px 12px;border-bottom:1px solid rgba(23,22,19,.09)">
+          <h2 style="margin:0 0 4px;font-size:14px;font-weight:600">来源与采集限制</h2>
+          <p style="margin:0;font-size:11.5px;color:rgba(23,22,19,.72);line-height:1.6">这些限制决定了哪些结论不能给出。</p>
+        </div>
+        <div style="padding:6px 18px 14px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(23,22,19,.07)">
+            <div><div style="font-size:13px;font-weight:500">Crop 父级记录</div><div style="font-size:11.5px;color:rgba(23,22,19,.76);line-height:1.6;margin-top:3px">未声明，因此不呈现谱系链。</div></div>
+            <span style="height:20px;padding:0 7px;border:1px dashed rgba(23,22,19,.28);border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.74);display:inline-flex;align-items:center;flex:none;margin-top:2px">来源未知</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(23,22,19,.07)">
+            <div><div style="font-size:13px;font-weight:500">原始旋律 / 节奏来源</div><div style="font-size:11.5px;color:rgba(23,22,19,.76);line-height:1.6;margin-top:3px">没有可比对的素材，任何保留判断都会弃权。</div></div>
+            <span style="height:20px;padding:0 7px;border:1px dashed rgba(23,22,19,.28);border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.74);display:inline-flex;align-items:center;flex:none;margin-top:2px">无来源</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(23,22,19,.07)">
+            <div><div style="font-size:13px;font-weight:500">ASR 歌词定位</div><div style="font-size:11.5px;color:rgba(23,22,19,.76);line-height:1.6;margin-top:3px">未运行；即使运行也只用于定位，不判定字词缺陷。</div></div>
+            <span style="height:20px;padding:0 7px;border:1px dashed rgba(23,22,19,.28);border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.74);display:inline-flex;align-items:center;flex:none;margin-top:2px">未采集</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0 0">
+            <div><div style="font-size:13px;font-weight:500">授权与合规状态</div><div style="font-size:11.5px;color:rgba(23,22,19,.76);line-height:1.6;margin-top:3px">工具不做授权、相似度或法律结论，也不代你查询。</div></div>
+            <span style="height:20px;padding:0 7px;border:1px dashed rgba(23,22,19,.28);border-radius:5px;font-size:10.5px;color:rgba(23,22,19,.74);display:inline-flex;align-items:center;flex:none;margin-top:2px">不判断</span>
+          </div>
+        </div>
+      </section>
+
+      <section style="border:1px solid #171613;border-radius:16px;background:#17161D;color:#F2F1ED;overflow:hidden">
+        <div style="padding:16px 18px 13px;border-bottom:1px solid rgba(255,255,255,.14);display:flex;align-items:center;gap:9px">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" rx="2.4" fill="none" stroke="#F2F1ED" stroke-width="1.1"></rect><path d="M4.6 7.1l1.6 1.6 3.2-3.4" stroke="#F2F1ED" stroke-width="1.2" fill="none" stroke-linecap="round"></path></svg>
+          <h2 style="margin:0;font-size:14px;font-weight:600">发布策略确认</h2>
+        </div>
+        <div style="padding:16px 18px 18px">
+          <p style="margin:0 0 14px;font-size:12.5px;line-height:1.75;color:rgba(242,241,237,.84)">逐条勾选你确认的措辞。每一条都是明确的事实性陈述，工具不替你判断，也不生成法律结论。</p>
+          <sc-for list="{{ policies }}" as="p" hint-placeholder-count="3">
+            <button onClick="{{ p.toggle }}" aria-pressed="{{ p.selected }}" style="{{ p.row }}">
+              <span style="{{ p.box }}">{{ p.mark }}</span>
+              <span style="font-size:12.5px;line-height:1.7;text-align:left">{{ p.text }}</span>
+            </button>
+          </sc-for>
+          <button onClick="{{ recordRelease }}" disabled="{{ releaseDisabled }}" style="{{ releaseBtn }}">{{ releaseLabel }}</button>
+          <p style="margin:10px 0 0;font-size:11.5px;line-height:1.7;color:rgba(242,241,237,.72)">{{ releaseHint }}</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPlan }}" hint-placeholder-val="{{ false }}">
+<div class="sse-scr sse-pad" style="padding:36px 40px 88px;max-width:1240px">
+  <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border:1px solid rgba(23,22,19,.14);border-radius:12px;background:#EFECE6;margin-bottom:24px;flex-wrap:wrap">
+    <span style="width:7px;height:7px;border-radius:50%;background:#171613;flex:none"></span>
+    <span style="font-size:12.5px;font-weight:500">项目：《春》</span>
+    <span style="font-size:12px;color:rgba(23,22,19,.78);line-height:1.6">独立示例 · 与《十七》的记录、结论和回退版本互不相关</span>
+    <button class="sse-btn" onClick="{{ goOverview }}" style="margin-left:auto;height:32px;padding:0 12px;border:1px solid rgba(23,22,19,.18);border-radius:9px;font-size:12px;background:#FCFBF9">回到《十七》</button>
+  </div>
+
+  <header style="padding-bottom:20px;border-bottom:1px solid rgba(23,22,19,.12)">
+    <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(23,22,19,.66);margin-bottom:8px">参考段 → Suno 计划 / Reference to plan</div>
+    <h1 style="margin:0 0 10px;font-size:30px;line-height:1.2;font-weight:600;letter-spacing:-.022em">16 秒参考段，只作为证据</h1>
+    <p style="margin:0;font-size:13px;color:rgba(23,22,19,.80);line-height:1.75;max-width:74ch">这段 16 秒素材<strong style="font-weight:600;color:#171613">由你提供，来自 v1.4</strong>，用于你自己听辨与描述走向，<strong style="font-weight:600;color:#171613">不作为 Sample 上传</strong>。所选的 v2.0 仍是编辑父级与回退版本。计划有边界：每批 2 个 take，最多 2 批。</p>
+  </header>
+
+  <section style="margin-top:24px;border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 20px 13px;border-bottom:1px solid rgba(23,22,19,.09);background:#F8F6F2;flex-wrap:wrap">
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0;font-size:14px;font-weight:600">用户提供的参考段 · 16 秒</h2>
+        <span style="font-size:12px;color:rgba(23,22,19,.78);font-variant-numeric:tabular-nums">来自 v1.4 · 在原曲中的位置：未提供</span>
+      </div>
+      <span style="height:24px;padding:0 9px;border:1px solid var(--ac-line);background:var(--ac-soft);color:var(--ac);border-radius:7px;font-size:11px;font-weight:500;display:inline-flex;align-items:center;flex:none">仅证据用途</span>
+    </div>
+    <div style="padding:18px 20px 16px">
+      <div style="position:relative;height:92px;border:1px solid var(--ac-line);border-radius:12px;background:var(--ac-soft);overflow:hidden;cursor:pointer" onClick="{{ seekRef }}">
+        <svg viewBox="0 0 1000 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><path d="{{ wfRef }}" stroke="#1B49C8" stroke-width="1.6" vector-effect="non-scaling-stroke" opacity=".85"></path></svg>
+        <div style="position:absolute;top:0;bottom:0;width:1px;background:#171613;left:{{ refPct }}"></div>
+        <span style="position:absolute;left:10px;top:8px;font-size:10.5px;color:rgba(23,22,19,.74)">波形示意 · 长度为已知的 16 秒</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:10.5px;color:rgba(23,22,19,.70);font-variant-numeric:tabular-nums"><span>00:00</span><span>00:04</span><span>00:08</span><span>00:12</span><span>00:16</span></div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="sse-btn" onClick="{{ playRef }}" style="height:44px;padding:0 15px;border:1px solid rgba(23,22,19,.18);border-radius:12px;font-size:13px;background:#fff;display:flex;align-items:center;gap:8px">{{ refGlyph }} 试听参考段</button>
+        <button class="sse-btn" style="height:44px;padding:0 15px;border:1px solid rgba(23,22,19,.18);border-radius:12px;font-size:13px;background:#fff">写下走向描述</button>
+        <button disabled="disabled" title="按计划约束禁用：参考段不作为 Sample 上传" style="height:44px;padding:0 15px;border:1px dashed rgba(23,22,19,.24);border-radius:12px;font-size:13px;color:rgba(23,22,19,.52);background:transparent;cursor:not-allowed">作为 Sample 上传（已禁用）</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="sse-two" style="display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:20px;margin-top:20px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="padding:16px 20px 13px;border-bottom:1px solid rgba(23,22,19,.09);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <h2 style="margin:0 0 4px;font-size:14px;font-weight:600">Replace Section 步骤</h2>
+            <p style="margin:0;font-size:11.5px;color:rgba(23,22,19,.72)">在 Song Editor 中执行 · 只表达结构性走向意图</p>
+          </div>
+          <span style="font-size:11.5px;color:rgba(23,22,19,.78);font-variant-numeric:tabular-nums">{{ stepDone }} / 5</span>
+        </div>
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+          <div style="display:flex;gap:14px;padding:15px 20px;border-bottom:1px solid rgba(23,22,19,.07);align-items:flex-start;flex-wrap:wrap">
+            <button onClick="{{ s.toggle }}" aria-label="标记此步已完成" aria-pressed="{{ s.selected }}" style="{{ s.box }}">{{ s.mark }}</button>
+            <div style="min-width:180px;flex:1">
+              <div style="font-size:13.5px;font-weight:500;line-height:1.55">{{ s.title }}</div>
+              <div style="font-size:12px;color:rgba(23,22,19,.78);line-height:1.7;margin-top:5px">{{ s.detail }}</div>
+            </div>
+            <span style="font-size:11px;color:rgba(23,22,19,.66);font-variant-numeric:tabular-nums;flex:none;margin-top:3px">STEP {{ s.num }}</span>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="padding:16px 20px 13px;border-bottom:1px solid rgba(23,22,19,.09)">
+          <h2 style="margin:0 0 4px;font-size:14px;font-weight:600">生成边界</h2>
+          <p style="margin:0;font-size:11.5px;color:rgba(23,22,19,.72)">超出边界即停止，不追加批次、不无限重生成。</p>
+        </div>
+        <div class="sse-grid2" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr))">
+          <div style="padding:16px 20px;border-right:1px solid rgba(23,22,19,.09);border-bottom:1px solid rgba(23,22,19,.09)">
+            <div style="font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:rgba(23,22,19,.66);margin-bottom:8px">每批 take 数</div>
+            <div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:24px;font-weight:600;font-variant-numeric:tabular-nums">2</span><span style="font-size:12px;color:rgba(23,22,19,.76)">不多不少</span></div>
+          </div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(23,22,19,.09)">
+            <div style="font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:rgba(23,22,19,.66);margin-bottom:8px">最大批次</div>
+            <div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:24px;font-weight:600;font-variant-numeric:tabular-nums">2</span><span style="font-size:12px;color:rgba(23,22,19,.76)">共 ≤ 4 个 take</span></div>
+          </div>
+          <div style="padding:16px 20px;border-right:1px solid rgba(23,22,19,.09)">
+            <div style="font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:rgba(23,22,19,.66);margin-bottom:8px">当前进度</div>
+            <div style="display:flex;align-items:center;gap:7px;margin-top:2px;flex-wrap:wrap">
+              <span style="width:34px;height:5px;border-radius:3px;background:rgba(23,22,19,.14)"></span>
+              <span style="width:34px;height:5px;border-radius:3px;background:rgba(23,22,19,.14)"></span>
+              <span style="font-size:12px;color:rgba(23,22,19,.78);margin-left:4px">第 1 批未开始</span>
+            </div>
+          </div>
+          <div style="padding:16px 20px">
+            <div style="font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:rgba(23,22,19,.66);margin-bottom:8px">编辑父级 / 回退</div>
+            <div style="font-size:13px">所选 v2.0 <span style="color:rgba(23,22,19,.78);font-size:12px">保持不变，永不覆盖</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section style="border:1px solid rgba(180,118,29,.34);border-radius:16px;background:#FBF7F0;padding:18px 20px">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap">
+          <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.4" fill="none" stroke="#7A4F0F" stroke-width="1.2" stroke-dasharray="2 2.2"></circle></svg>
+          <h2 style="margin:0;font-size:14px;font-weight:600;color:#3A2A0B">弃权状态 · 精确旋律 / 节奏保留</h2>
+          <span style="margin-left:auto;font-size:11px;color:#7A4F0F;font-weight:600">暂不推荐</span>
+        </div>
+        <p style="margin:0 0 12px;font-size:12.5px;line-height:1.8;color:rgba(58,42,11,.88)">如果目标是「精确保留原有旋律或节奏」，而没有可核验的比对证据，工具<strong style="font-weight:600">弃权</strong>：不给出通过判断，也不给出相似度数值。参考段本身不构成这类证据。</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button onClick="{{ toggleAbstain }}" aria-pressed="{{ abstainSelected }}" style="{{ abstainBtn }}">{{ abstainLabel }}</button>
+          <button class="sse-btn" style="height:44px;padding:0 14px;border:1px solid rgba(138,90,18,.40);border-radius:11px;font-size:12.5px;background:#FFFDF9;color:#5E3D0B">补充可比对证据</button>
+        </div>
+        <div style="margin-top:12px;font-size:11.5px;color:rgba(58,42,11,.86);line-height:1.7">{{ abstainState }}</div>
+      </section>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;overflow:hidden">
+        <div style="padding:15px 18px 12px;border-bottom:1px solid rgba(23,22,19,.09)">
+          <h2 style="margin:0;font-size:14px;font-weight:600">硬性约束</h2>
+        </div>
+        <div style="padding:6px 18px 16px">
+          <div style="display:flex;gap:11px;padding:12px 0;border-bottom:1px solid rgba(23,22,19,.07)">
+            <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true" style="flex:none;margin-top:2px"><circle cx="6.5" cy="6.5" r="5.4" fill="none" stroke="#171613" stroke-width="1.1"></circle><path d="M4 9L9 4" stroke="#171613" stroke-width="1.3" stroke-linecap="round"></path></svg>
+            <div><div style="font-size:13px;font-weight:500">不要作为 Sample 上传</div><div style="font-size:11.5px;color:rgba(23,22,19,.78);line-height:1.65;margin-top:3px">参考段只用于你自己听辨与描述走向，不进入上传流程。</div></div>
+          </div>
+          <div style="display:flex;gap:11px;padding:12px 0;border-bottom:1px solid rgba(23,22,19,.07)">
+            <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M6.5 1.6v9.8M3 8l3.5 3.4L10 8" stroke="#171613" stroke-width="1.2" fill="none" stroke-linecap="round"></path></svg>
+            <div><div style="font-size:13px;font-weight:500">所选 v2.0 保持为编辑父级</div><div style="font-size:11.5px;color:rgba(23,22,19,.78);line-height:1.65;margin-top:3px">它同时是回退版本；参考段的来源 v1.4 不作为父级。</div></div>
+          </div>
+          <div style="display:flex;gap:11px;padding:12px 0;border-bottom:1px solid rgba(23,22,19,.07)">
+            <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true" style="flex:none;margin-top:2px"><rect x="1.6" y="2.4" width="9.8" height="8.2" rx="1.6" fill="none" stroke="#171613" stroke-width="1.1"></rect><path d="M1.6 5.4h9.8" stroke="#171613" stroke-width="1.1"></path></svg>
+            <div><div style="font-size:13px;font-weight:500">只表达结构性走向意图</div><div style="font-size:11.5px;color:rgba(23,22,19,.78);line-height:1.65;margin-top:3px">用文字描述你想要的走向，不要求复刻具体旋律或节奏。</div></div>
+          </div>
+          <div style="display:flex;gap:11px;padding:12px 0 0">
+            <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M2 6.5a4.5 4.5 0 109 0 4.5 4.5 0 00-9 0" fill="none" stroke="#171613" stroke-width="1.1"></path><path d="M6.5 4v2.6l1.9 1.2" stroke="#171613" stroke-width="1.1" fill="none" stroke-linecap="round"></path></svg>
+            <div><div style="font-size:13px;font-weight:500">回退优先于继续尝试</div><div style="font-size:11.5px;color:rgba(23,22,19,.78);line-height:1.65;margin-top:3px">两批都不满意时终止本轮，保留所选 v2.0。</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;padding:16px 18px">
+        <h2 style="margin:0 0 4px;font-size:14px;font-weight:600">走向描述 · 示例措辞</h2>
+        <p style="margin:0 0 11px;font-size:11.5px;color:rgba(23,22,19,.72);line-height:1.6">仅为写法示例，不是从音频推导出的结论。</p>
+        <div style="padding:13px;border:1px solid rgba(23,22,19,.12);border-radius:12px;background:#F8F6F2;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.8;color:rgba(23,22,19,.88)">keep the same vocal identity; let this section develop instead of repeating; end the phrase so it resolves</div>
+        <button class="sse-btn" style="margin-top:11px;height:44px;padding:0 14px;border:1px solid rgba(23,22,19,.18);border-radius:11px;font-size:12.5px;background:#fff;width:100%">复制</button>
+        <p style="margin:11px 0 0;font-size:11.5px;color:rgba(23,22,19,.72);line-height:1.7">保持原始描述不变，只追加走向意图；改动越少，差异越可追溯。</p>
+      </section>
+
+      <section style="border:1px solid rgba(23,22,19,.12);border-radius:16px;background:#FCFBF9;padding:16px 18px">
+        <h2 style="margin:0 0 10px;font-size:14px;font-weight:600">本轮结束条件</h2>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:12px;line-height:1.7;color:rgba(23,22,19,.82)">
+          <div style="display:flex;gap:9px"><span style="color:var(--ac);flex:none">1</span><span>第 1 批里有 take 在盲听中被你更偏好 → 进入具名复核。</span></div>
+          <div style="display:flex;gap:9px"><span style="color:var(--ac);flex:none">2</span><span>第 1 批都不如所选 v2.0 → 只允许第 2 批，改动仅限走向描述。</span></div>
+          <div style="display:flex;gap:9px"><span style="color:var(--ac);flex:none">3</span><span>第 2 批仍不满意 → 终止，保留所选 v2.0 或搁置本轮。</span></div>
+        </div>
+        <button onClick="{{ goOverview }}" style="margin-top:16px;width:100%;height:44px;border-radius:12px;background:var(--ac);color:#fff;font-size:13px;font-weight:500">返回《十七》总览</button>
+      </section>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cobalt&quot;,&quot;violet&quot;],&quot;default&quot;:&quot;cobalt&quot;,&quot;tsType&quot;:&quot;'cobalt'|'violet'&quot;,&quot;section&quot;:&quot;外观&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'overview',
+    playing: null,      // null | 'blind' | 'named' | 'alt' | 'ending' | 'ref'
+    tBlind: 0, tNamed: 0, tAlt: 0, tEnd: 200, tRef: 0,
+    active: Math.random() < 0.5 ? 'A' : 'B',
+    loop: false,
+    picks: {},
+    chips: {},
+    notes: [],
+    reqs: {},
+    lyrics: {},
+    ending: null,
+    policy: {},
+    steps: {},
+    abstain: true
+  };
+
+  WIN = 20; D_NAMED = 228; D_ALT = 274; D_END = 214; D_REF = 16;
+
+  seg(levels, p) {
+    const n = levels.length, x = p * n, i = Math.min(n - 1, Math.floor(x)), f = x - i;
+    const a = levels[i], b = levels[Math.min(n - 1, i + 1)];
+    return a + (b - a) * Math.min(1, f * 1.6);
+  }
+  wave(seed, bars, levels, tail) {
+    let s = seed >>> 0;
+    const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+    let d = '';
+    for (let i = 0; i < bars; i++) {
+      const p = i / (bars - 1);
+      let e = this.seg(levels, p);
+      if (p < 0.012) e *= p / 0.012;
+      if (tail && p > tail) e *= Math.max(0, 1 - (p - tail) / (1 - tail) * 1.35);
+      const jit = 0.42 + 0.58 * rnd() * (0.75 + 0.5 * rnd());
+      const a = Math.max(0.7, e * jit * 47);
+      d += 'M' + ((i / (bars - 1)) * 1000).toFixed(2) + ' ' + (50 - a).toFixed(2) + 'V' + (50 + a).toFixed(2);
+    }
+    return d;
+  }
+  waves = {
+    a: this.wave(9137, 232, [0.22, 0.46, 0.68, 0.94, 0.60, 0.72, 0.99, 0.86, 0.42], 0.955),
+    b: this.wave(4421, 240, [0.20, 0.50, 0.72, 0.90, 0.66, 0.78, 0.97, 0.80, 0.30], 0.86),
+    c: this.wave(7715, 228, [0.22, 0.46, 0.68, 0.93, 0.61, 0.71, 0.98, 0.84, 0.46], 0.93),
+    d: this.wave(2298, 246, [0.19, 0.44, 0.66, 0.92, 0.58, 0.70, 0.96, 0.62, 0.34], 0.80),
+    e: this.wave(6604, 214, [0.24, 0.52, 0.74, 0.90, 0.70, 0.70, 0.88, 0.52, 0.18], 0.88),
+    winA: this.wave(1187, 120, [0.58, 0.82, 0.74, 0.90, 0.86, 0.78], 0),
+    winB: this.wave(5563, 120, [0.62, 0.78, 0.80, 0.86, 0.90, 0.74], 0),
+    end: this.wave(3351, 96, [0.86, 0.74, 0.58, 0.36, 0.14, 0.04, 0.02], 0.30),
+    ref: this.wave(8890, 104, [0.60, 0.86, 0.96, 0.82, 0.90, 0.70], 0)
+  };
+
+  criteriaDefs = [
+    { k: 'warmth', zh: '温暖度', en: 'WARMTH', hint: '低中频厚度与人声距离感 · 测量无法定义', chips: ['中低频更厚', '高频更亮', '人声更近', '空间更干'] },
+    { k: 'fullness', zh: '饱满度', en: 'FULLNESS', hint: '层次与支撑是否够 · 只由听辨决定', chips: ['编曲层更多', '低频支撑足', '中频拥挤', '动态更开'] },
+    { k: 'hook', zh: 'Hook 记忆点', en: 'HOOK', hint: '听完刺激窗后是否还记得', chips: ['进入更快', '旋律更易记', '重复更清晰', '缺少爆点'] },
+    { k: 'voice', zh: '人声身份', en: 'VOCAL IDENTITY', hint: '是否听起来是同一个人 · 有无音色跳变', chips: ['音色一致', '咬字更清', '换声更自然', '出现异常颤音'] },
+    { k: 'arrange', zh: '编曲 / 和声发展', en: 'ARRANGEMENT', hint: '是否有真实发展，而不是重复', chips: ['有发展', '和声更丰富', '结构重复', '层次更薄'] },
+    { k: 'lyric', zh: '歌词表达', en: 'LYRIC DELIVERY', hint: '断句、重音、情绪是否贴合词意', chips: ['断句更自然', '重音准确', '字词模糊', '情绪更贴合'] },
+    { k: 'ending', zh: '结尾完成度', en: 'ENDING', hint: '窗内若含结尾：是否听起来真的结束了', chips: ['收束完整', '淡出仓促', '有明确终止', '尾音被切'] }
+  ];
+  reqDefs = [
+    { k: 'pref', title: '声音曲调饱满温暖', evidence: '来源：你在盲听中声明的偏好。需你确认建议版本是否仍然满足。', tag: 'human', tagText: '需人工' },
+    { k: 'end', title: '结尾听感收束完整', evidence: '无检测边界数据；必须在有声播放中确认。', tag: 'human', tagText: '需人工' },
+    { k: 'dur', title: '时长', evidence: '已测量：17-v9-corp-1 为 3:48。未录入任何时长上下限要求。', tag: 'ok', tagText: '已测量' },
+    { k: 'melody', title: '精确旋律 / 节奏保留', evidence: '无可比对来源 → 工具弃权，不做通过或否定判断。', tag: 'abstain', tagText: '暂不推荐' }
+  ];
+  lyricDefs = [
+    { text: '时至十七 光已有深浅', note: '已捕获的词句 · 定位未运行' },
+    { text: '盛夏白昼 仍在绵延', note: '已捕获的词句 · 定位未运行' },
+    { text: '这一岁有自己的边沿', note: '已捕获的词句 · 定位未运行' },
+    { text: '也容得光影缓缓变', note: '已捕获的词句 · 定位未运行' },
+    { text: '暮色尚在遥远的天边', note: '已捕获的词句 · 定位未运行' },
+    { text: '此刻自有清澈光线', note: '已捕获的词句 · 定位未运行' }
+  ];
+  policyDefs = [
+    { k: 'listened', text: '我已在有声播放中完整听过 17-v9-corp-1（3:48）。' },
+    { k: 'limits', text: '我知晓上表所列的采集限制：Crop 父级来源未知、无旋律 / 节奏比对来源、ASR 定位未运行。' },
+    { k: 'own', text: '发布与否由我决定；工具未给出授权、相似度或合规结论。' }
+  ];
+  stepDefs = [
+    { title: '打开所选 v2.0', detail: '确认编辑对象是所选 v2.0；它同时是本轮回退版本，不更换成其他记录。' },
+    { title: '进入 Song Editor → Replace Section', detail: '只替换你要改动的那一段，范围之外不动，便于之后追溯差异。' },
+    { title: '用文字写下结构性走向意图', detail: '参考段只供你自己听辨；不上传、不要求复刻具体旋律或节奏。' },
+    { title: '生成第 1 批：2 个 take', detail: '生成后先与所选 v2.0 做盲听对照，再决定是否继续；不要边听边追加生成。' },
+    { title: '不满意则最多再 1 批，仍不满意即终止', detail: '终止后保留所选 v2.0 或搁置本轮；不要进入第 3 批。' }
+  ];
+
+  componentDidMount() {
+    this.applyAccent();
+    this.timer = setInterval(() => {
+      const p = this.state.playing;
+      if (!p) return;
+      this.setState(s => {
+        if (p === 'blind') { let t = s.tBlind + 0.12; if (t > this.WIN) t = s.loop ? 0 : this.WIN; return { tBlind: t, playing: (t >= this.WIN && !s.loop) ? null : p }; }
+        if (p === 'named') { let t = s.tNamed + 0.12; if (t > this.D_NAMED) return { tNamed: this.D_NAMED, playing: null }; return { tNamed: t }; }
+        if (p === 'alt') { let t = s.tAlt + 0.12; if (t > this.D_ALT) return { tAlt: this.D_ALT, playing: null }; return { tAlt: t }; }
+        if (p === 'ending') { let t = s.tEnd + 0.12; if (t > this.D_END) return { tEnd: this.D_END, playing: null }; return { tEnd: t }; }
+        if (p === 'ref') { let t = s.tRef + 0.12; if (t > this.D_REF) return { tRef: 0, playing: null }; return { tRef: t }; }
+        return {};
+      });
+    }, 120);
+    this.onKey = e => {
+      if (this.state.screen !== 'blind') return;
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const k = e.key.toLowerCase();
+      if (e.key === ' ') { e.preventDefault(); this.setState(s => ({ playing: s.playing === 'blind' ? null : 'blind' })); }
+      else if (k === 'a') this.setState({ active: 'A' });
+      else if (k === 'b') this.setState({ active: 'B' });
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); this.seekBlind(this.state.tBlind - 5); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); this.seekBlind(this.state.tBlind + 5); }
+      else if (k === 'l') this.setState(s => ({ loop: !s.loop }));
+      else if (k === 'n') this.pushNote();
+      else if (/^[1-7]$/.test(e.key)) {
+        const item = document.querySelectorAll('.sse-criterion')[Number(e.key) - 1];
+        if (item) {
+          item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const firstButton = item.querySelector('button');
+          if (firstButton) firstButton.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', this.onKey);
+  }
+  componentDidUpdate() { this.applyAccent(); }
+  componentWillUnmount() { clearInterval(this.timer); window.removeEventListener('keydown', this.onKey); }
+  applyAccent() {
+    const v = this.props.accent === 'violet', r = document.documentElement;
+    r.style.setProperty('--ac', v ? '#5B2BD6' : '#1B49C8');
+    r.style.setProperty('--ac-soft', v ? 'rgba(91,43,214,.07)' : 'rgba(27,73,200,.07)');
+    r.style.setProperty('--ac-line', v ? 'rgba(91,43,214,.30)' : 'rgba(27,73,200,.30)');
+  }
+
+  mmss(s) { s = Math.max(0, s); const m = Math.floor(s / 60), x = Math.floor(s % 60); return m + ':' + (x < 10 ? '0' : '') + x; }
+  win(s) { s = Math.max(0, s); const m = Math.floor(s / 60), x = Math.floor(s % 60); return (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
+  seekBlind(t) { this.setState({ tBlind: Math.max(0, Math.min(this.WIN, t)) }); }
+  pushNote() {
+    const n = { time: this.win(this.state.tBlind), side: this.state.active + ' · 刺激窗内', text: '（待填写：写下你在这个位置听到的差异）' };
+    this.setState(s => ({ notes: s.notes.concat([n]) }));
+  }
+  parse(s) { const o = {}; s.split(';').forEach(p => { if (!p) return; const i = p.indexOf(':'); if (i < 0) return; const k = p.slice(0, i).trim().replace(/-([a-z])/g, (m, c) => c.toUpperCase()); o[k] = p.slice(i + 1).trim(); }); return o; }
+
+  renderVals() {
+    const st = this.state, sc = st.screen, P = s => this.parse(s);
+    const AC = this.props.accent === 'violet' ? '#5B2BD6' : '#1B49C8';
+    const nav = on => P('display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px;min-height:44px;transition:background .14s ease;' +
+      (on ? 'background:#FCFBF9;box-shadow:0 1px 2px rgba(23,22,19,.06);color:#171613;' : 'color:rgba(23,22,19,.82);'));
+
+    const segBtn = (on, dark) => P('min-width:52px;height:34px;padding:0 10px;border-radius:9px;font-size:12px;font-weight:500;transition:all .14s ease;border:1px solid ' +
+      (on ? (dark ? 'transparent' : AC) : (dark ? 'rgba(255,255,255,.20)' : 'rgba(23,22,19,.18)')) +
+      ';background:' + (on ? (dark ? '#EFEEEA' : AC) : 'transparent') +
+      ';color:' + (on ? (dark ? '#111113' : '#fff') : (dark ? 'rgba(255,255,255,.82)' : 'rgba(23,22,19,.82)')));
+
+    const criteria = this.criteriaDefs.map((c, i) => {
+      const p = st.picks[c.k];
+      return {
+        num: String(i + 1).padStart(2, '0'), zh: c.zh, en: c.en, hint: c.hint,
+        selectedA: p === 'A', selectedEq: p === 'eq', selectedB: p === 'B',
+        styleA: segBtn(p === 'A', 1), styleEq: segBtn(p === 'eq', 1), styleB: segBtn(p === 'B', 1),
+        pickA: () => this.setState(s => ({ picks: Object.assign({}, s.picks, { [c.k]: 'A' }) })),
+        pickEq: () => this.setState(s => ({ picks: Object.assign({}, s.picks, { [c.k]: 'eq' }) })),
+        pickB: () => this.setState(s => ({ picks: Object.assign({}, s.picks, { [c.k]: 'B' }) })),
+        chips: c.chips.map(label => {
+          const key = c.k + ':' + label, on = !!st.chips[key];
+          return {
+            label, selected: on,
+            toggle: () => this.setState(s => { const n = Object.assign({}, s.chips); if (n[key]) delete n[key]; else n[key] = true; return { chips: n }; }),
+            style: P('height:28px;padding:0 10px;border-radius:8px;font-size:11.5px;transition:all .14s ease;border:1px solid ' +
+              (on ? 'rgba(157,180,248,.60)' : 'rgba(255,255,255,.18)') + ';background:' + (on ? 'rgba(157,180,248,.16)' : 'transparent') +
+              ';color:' + (on ? '#C6D4FB' : 'rgba(255,255,255,.80)'))
+          };
+        })
+      };
+    });
+    const doneCount = this.criteriaDefs.filter(c => st.picks[c.k]).length;
+
+    const cbox = on => P('width:24px;height:24px;flex:none;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;margin-top:1px;transition:all .14s ease;border:1px solid ' +
+      (on ? AC : 'rgba(23,22,19,.30)') + ';background:' + (on ? AC : '#fff') + ';color:' + (on ? '#fff' : 'transparent'));
+    const tag = kind => P('flex:none;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:500;display:inline-flex;align-items:center;white-space:nowrap;margin-top:2px;' +
+      (kind === 'ok' ? 'border:1px solid rgba(23,22,19,.16);background:#F4F2EE;color:rgba(23,22,19,.80);'
+        : kind === 'human' ? 'border:1px solid rgba(180,118,29,.42);background:#FBF7F0;color:#7A4F0F;'
+          : 'border:1px dashed rgba(180,118,29,.50);background:transparent;color:#7A4F0F;'));
+    const smallBtn = (on, tone) => P('height:30px;padding:0 10px;border-radius:8px;font-size:11.5px;transition:all .14s ease;border:1px solid ' +
+      (on ? (tone === 'flag' ? 'rgba(138,90,18,.55)' : AC) : 'rgba(23,22,19,.18)') +
+      ';background:' + (on ? (tone === 'flag' ? '#F7EFE1' : AC) : '#fff') +
+      ';color:' + (on ? (tone === 'flag' ? '#5E3D0B' : '#fff') : 'rgba(23,22,19,.82)'));
+
+    const lyricDone = Object.keys(st.lyrics).filter(k => st.lyrics[k] === 'ok').length;
+    const policyDone = this.policyDefs.filter(p => st.policy[p.k]).length;
+    const canRelease = policyDone === this.policyDefs.length && st.ending === 'ok';
+
+    return {
+      isOverview: sc === 'overview', isBlind: sc === 'blind', isNamed: sc === 'named', isPlan: sc === 'plan',
+      goOverview: () => this.setState({ screen: 'overview', playing: null }),
+      goBlind: () => this.setState({
+        screen: 'blind',
+        playing: null,
+        active: Math.random() < 0.5 ? 'A' : 'B'
+      }),
+      goNamed: () => this.setState({ screen: 'named', playing: null }),
+      goPlan: () => this.setState({ screen: 'plan', playing: null }),
+      navOverview: nav(sc === 'overview'), navBlind: nav(sc === 'blind'), navNamed: nav(sc === 'named'), navPlan: nav(sc === 'plan'),
+      currentOverview: sc === 'overview' ? 'page' : null,
+      currentBlind: sc === 'blind' ? 'page' : null,
+      currentNamed: sc === 'named' ? 'page' : null,
+      currentPlan: sc === 'plan' ? 'page' : null,
+
+      wfA: this.waves.a, wfB: this.waves.b, wfC: this.waves.c, wfD: this.waves.d, wfE: this.waves.e,
+      wfWinA: this.waves.winA, wfWinB: this.waves.winB, wfEnd: this.waves.end, wfRef: this.waves.ref,
+
+      strokeA: st.active === 'A' ? '#EFEEEA' : 'rgba(239,238,234,.34)',
+      strokeB: st.active === 'B' ? '#EFEEEA' : 'rgba(239,238,234,.34)',
+      laneTagA: P('width:26px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;' +
+        (st.active === 'A' ? 'background:#EFEEEA;color:#111113;' : 'background:rgba(255,255,255,.12);color:rgba(255,255,255,.78);')),
+      laneTagB: P('width:26px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;' +
+        (st.active === 'B' ? 'background:#EFEEEA;color:#111113;' : 'background:rgba(255,255,255,.12);color:rgba(255,255,255,.78);')),
+      abBtnA: P('width:52px;height:44px;border-radius:12px;font-size:14px;font-weight:600;transition:all .14s ease;border:1px solid ' +
+        (st.active === 'A' ? 'transparent' : 'rgba(255,255,255,.20)') + ';background:' + (st.active === 'A' ? '#EFEEEA' : 'transparent') +
+        ';color:' + (st.active === 'A' ? '#111113' : 'rgba(255,255,255,.84)')),
+      abBtnB: P('width:52px;height:44px;border-radius:12px;font-size:14px;font-weight:600;transition:all .14s ease;border:1px solid ' +
+        (st.active === 'B' ? 'transparent' : 'rgba(255,255,255,.20)') + ';background:' + (st.active === 'B' ? '#EFEEEA' : 'transparent') +
+        ';color:' + (st.active === 'B' ? '#111113' : 'rgba(255,255,255,.84)')),
+
+      tLabel: this.win(st.tBlind), activeLabel: st.active + '（身份隐藏）',
+      playPct: (st.tBlind / this.WIN * 100).toFixed(2) + '%',
+      playGlyph: st.playing === 'blind' ? '❚❚' : '▶',
+      playBtn: P('width:52px;height:44px;border-radius:12px;background:#EFEEEA;color:#111113;display:flex;align-items:center;justify-content:center;font-size:13px;letter-spacing:.06em'),
+      togglePlay: () => this.setState(s => ({ playing: s.playing === 'blind' ? null : 'blind' })),
+      back5: () => this.seekBlind(this.state.tBlind - 5), fwd5: () => this.seekBlind(this.state.tBlind + 5),
+      setA: () => this.setState({ active: 'A' }), setB: () => this.setState({ active: 'B' }),
+      activeA: st.active === 'A', activeB: st.active === 'B',
+      seekFromClick: e => { const r = e.currentTarget.getBoundingClientRect(); this.seekBlind((e.clientX - r.left) / r.width * this.WIN); },
+      toggleLoop: () => this.setState(s => ({ loop: !s.loop })),
+      loopLabel: st.loop ? '00:00 – 00:20' : '关',
+      loopBtn: P('height:36px;padding:0 12px;border-radius:10px;font-size:12px;transition:all .14s ease;border:1px solid ' +
+        (st.loop ? 'rgba(157,180,248,.60)' : 'rgba(255,255,255,.18)') + ';background:' + (st.loop ? 'rgba(157,180,248,.16)' : 'transparent') +
+        ';color:' + (st.loop ? '#C6D4FB' : 'rgba(255,255,255,.84)')),
+      addNote: () => this.pushNote(),
+      notes: st.notes.map(n => Object.assign({}, n, { seek: () => { const [m, s2] = n.time.split(':').map(Number); this.seekBlind(m * 60 + s2); } })),
+      noteCount: st.notes.length, noNotes: st.notes.length === 0,
+      criteria, doneCount,
+      progressCells: this.criteriaDefs.map(c => ({ style: P('flex:1;height:4px;border-radius:2px;background:' + (st.picks[c.k] ? '#8FAAF7' : 'rgba(255,255,255,.16)')) })),
+      submitHint: doneCount === 7 ? '七项均已判断。提交后 A / B 身份将解锁，本轮记录写入证据包。'
+        : '还有 ' + (7 - doneCount) + ' 项未判断。未判断项记为「需要人工确认」，不会被推测填充。',
+      submitBtn: P('height:44px;padding:0 20px;border-radius:12px;font-size:13px;font-weight:500;transition:all .14s ease;' +
+        (doneCount === 7 ? 'background:#EFEEEA;color:#111113;' : 'background:rgba(255,255,255,.12);color:rgba(255,255,255,.70);border:1px solid rgba(255,255,255,.20);')),
+      submitRound: () => this.setState({ screen: 'named', playing: null }),
+
+      namedLabel: this.mmss(st.tNamed), namedPct: (st.tNamed / this.D_NAMED * 100).toFixed(2) + '%',
+      namedGlyph: st.playing === 'named' ? '❚❚' : '▶',
+      playNamed: () => this.setState(s => ({ playing: s.playing === 'named' ? null : 'named' })),
+      seekNamed: e => { const r = e.currentTarget.getBoundingClientRect(); this.setState({ tNamed: (e.clientX - r.left) / r.width * this.D_NAMED }); },
+      altLabel: this.mmss(st.tAlt), altPct: (st.tAlt / this.D_ALT * 100).toFixed(2) + '%',
+      altGlyph: st.playing === 'alt' ? '❚❚' : '▶',
+      playAlt: () => this.setState(s => ({ playing: s.playing === 'alt' ? null : 'alt' })),
+      seekAlt: e => { const r = e.currentTarget.getBoundingClientRect(); this.setState({ tAlt: (e.clientX - r.left) / r.width * this.D_ALT }); },
+
+      reqs: this.reqDefs.map(r => ({
+        title: r.title, evidence: r.evidence, tag: tag(r.tag), tagText: r.tagText,
+        box: cbox(!!st.reqs[r.k]), mark: st.reqs[r.k] ? '✓' : '',
+        selected: !!st.reqs[r.k],
+        toggle: () => this.setState(s => ({ reqs: Object.assign({}, s.reqs, { [r.k]: !s.reqs[r.k] }) }))
+      })),
+      reqDone: Object.keys(st.reqs).filter(k => st.reqs[k]).length,
+
+      lyrics: this.lyricDefs.map((l, i) => ({
+        num: String(i + 1).padStart(2, '0'), text: l.text,
+        note: st.lyrics[i] === 'flag' ? '你已标记疑问 · 需再听辨' : st.lyrics[i] === 'ok' ? '你已核对' : l.note,
+        okStyle: smallBtn(st.lyrics[i] === 'ok'), flagStyle: smallBtn(st.lyrics[i] === 'flag', 'flag'),
+        okSelected: st.lyrics[i] === 'ok', flagSelected: st.lyrics[i] === 'flag',
+        ok: () => this.setState(s => ({ lyrics: Object.assign({}, s.lyrics, { [i]: s.lyrics[i] === 'ok' ? null : 'ok' }) })),
+        flag: () => this.setState(s => ({ lyrics: Object.assign({}, s.lyrics, { [i]: s.lyrics[i] === 'flag' ? null : 'flag' }) }))
+      })),
+      lyricDone,
+
+      endTag: tag(st.ending === 'ok' ? 'ok' : 'human'),
+      endTagText: st.ending === 'ok' ? '你已确认：收束完整' : st.ending === 'bad' ? '你已标记：需修补' : '未确认',
+      endPct: ((st.tEnd - 200) / (this.D_END - 200) * 100).toFixed(2) + '%',
+      endGlyph: st.playing === 'ending' ? '❚❚' : '▶',
+      playEnding: () => this.setState(s => ({ tEnd: s.playing === 'ending' ? s.tEnd : 200, playing: s.playing === 'ending' ? null : 'ending' })),
+      seekEnd: e => { const r = e.currentTarget.getBoundingClientRect(); this.setState({ tEnd: 200 + (e.clientX - r.left) / r.width * (this.D_END - 200) }); },
+      audioState: P('font-size:15px;font-weight:500;' + (st.playing === 'ending' ? 'color:' + AC : 'color:rgba(23,22,19,.84)')),
+      audioStateText: st.playing === 'ending' ? '有声播放中' : '未播放',
+      confirmEnding: () => this.setState({ ending: 'ok' }),
+      flagEnding: () => this.setState({ ending: 'bad' }),
+      endOkSelected: st.ending === 'ok',
+      endBadSelected: st.ending === 'bad',
+      endOkBtn: P('height:44px;padding:0 16px;border-radius:12px;font-size:13px;font-weight:500;transition:all .14s ease;border:1px solid ' +
+        (st.ending === 'ok' ? 'transparent' : 'rgba(23,22,19,.22)') + ';background:' + (st.ending === 'ok' ? AC : '#fff') +
+        ';color:' + (st.ending === 'ok' ? '#fff' : '#171613')),
+      endBadBtn: P('height:44px;padding:0 16px;border-radius:12px;font-size:13px;font-weight:500;transition:all .14s ease;border:1px solid ' +
+        (st.ending === 'bad' ? 'rgba(138,90,18,.60)' : 'rgba(23,22,19,.22)') + ';background:' + (st.ending === 'bad' ? '#F7EFE1' : '#fff') +
+        ';color:' + (st.ending === 'bad' ? '#5E3D0B' : 'rgba(23,22,19,.84)')),
+      endHint: st.ending === 'ok' ? '已记录你的确认。「直接发布可行性」仍受其他未采集项影响。'
+        : st.ending === 'bad' ? '已记录「需修补」。此记录不进入发布候选。'
+          : '未确认前，「直接发布可行性」保持为「需要人工确认」，发布决定不可记录。',
+
+      policies: this.policyDefs.map(p => {
+        const on = !!st.policy[p.k];
+        return {
+          text: p.text, mark: on ? '✓' : '', selected: on,
+          toggle: () => this.setState(s => ({ policy: Object.assign({}, s.policy, { [p.k]: !s.policy[p.k] }) })),
+          row: P('display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:13px;margin-bottom:8px;border-radius:12px;transition:all .14s ease;border:1px solid ' +
+            (on ? 'rgba(255,255,255,.38)' : 'rgba(255,255,255,.16)') + ';background:' + (on ? 'rgba(255,255,255,.09)' : 'transparent')),
+          box: P('width:22px;height:22px;flex:none;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;border:1px solid ' +
+            (on ? '#F2F1ED' : 'rgba(255,255,255,.40)') + ';background:' + (on ? '#F2F1ED' : 'transparent') + ';color:#17161D')
+        };
+      }),
+      releaseBtn: P('margin-top:12px;width:100%;height:44px;border-radius:12px;font-size:13px;font-weight:500;transition:all .14s ease;' +
+        (canRelease ? 'background:#F2F1ED;color:#17161D;' : 'background:rgba(255,255,255,.10);color:rgba(242,241,237,.70);border:1px solid rgba(255,255,255,.18);cursor:not-allowed;')),
+      releaseDisabled: !canRelease,
+      recordRelease: () => {
+        if (canRelease) this.setState({ screen: 'plan', playing: null });
+      },
+      releaseLabel: canRelease ? '记录发布决定：17-v9-corp-1' : '暂不推荐 · 条件未满足',
+      releaseHint: canRelease ? '将写入：你确认过的措辞、结尾确认结果、以及所有仍未采集的项。'
+        : '需要：确认结尾收束（' + (st.ending === 'ok' ? '已完成' : '未完成') + '）· 勾选全部 ' + this.policyDefs.length + ' 条措辞（' + policyDone + ' / ' + this.policyDefs.length + '）。',
+
+      refPct: (st.tRef / this.D_REF * 100).toFixed(2) + '%',
+      refGlyph: st.playing === 'ref' ? '❚❚' : '▶',
+      playRef: () => this.setState(s => ({ playing: s.playing === 'ref' ? null : 'ref' })),
+      seekRef: e => { const r = e.currentTarget.getBoundingClientRect(); this.setState({ tRef: (e.clientX - r.left) / r.width * this.D_REF }); },
+      steps: this.stepDefs.map((s2, i) => ({
+        num: String(i + 1), title: s2.title, detail: s2.detail,
+        box: cbox(!!st.steps[i]), mark: st.steps[i] ? '✓' : '',
+        selected: !!st.steps[i],
+        toggle: () => this.setState(s => ({ steps: Object.assign({}, s.steps, { [i]: !s.steps[i] }) }))
+      })),
+      stepDone: Object.keys(st.steps).filter(k => st.steps[k]).length,
+      toggleAbstain: () => this.setState(s => ({ abstain: !s.abstain })),
+      abstainSelected: st.abstain,
+      abstainLabel: st.abstain ? '保持弃权（推荐）' : '已手动接受风险',
+      abstainBtn: P('height:44px;padding:0 14px;border-radius:11px;font-size:12.5px;font-weight:500;transition:all .14s ease;border:1px solid ' +
+        (st.abstain ? 'rgba(138,90,18,.55)' : 'rgba(23,22,19,.24)') + ';background:' + (st.abstain ? '#F7EFE1' : '#fff') + ';color:#5E3D0B'),
+      abstainState: st.abstain ? '当前状态：暂不推荐 / 需要人工确认 —— 此项不会计入任何「已通过」。'
+        : '你已手动接受风险。该决定按你的措辞记录，工具仍不给出通过判断。'
+    };
+  }
+}
+</script>
+</body>
+</html>

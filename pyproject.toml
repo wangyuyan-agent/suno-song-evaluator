@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "suno-song-evaluator"
+version = "0.2.0"
+description = "Evidence-first comparison and release decision support for Suno song candidates"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "wangyuyan-agent" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Multimedia :: Sound/Audio :: Analysis",
+]
+dependencies = [
+  "fastapi>=0.115,<1",
+  "httpx[socks]>=0.27,<1",
+  "numpy>=1.26,<3",
+  "pydantic>=2.8,<3",
+  "pyloudnorm>=0.1.1,<1",
+  "scipy>=1.12,<2",
+  "soundfile>=0.12,<1",
+  "typer>=0.12,<1",
+  "uvicorn>=0.30,<1",
+]
+
+[project.optional-dependencies]
+asr = [
+  "mlx-whisper>=0.4.3,<0.5; sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
+dev = [
+  "pytest>=8.2,<9",
+  "pytest-cov>=5,<7",
+  "ruff>=0.12,<1",
+]
+
+[project.scripts]
+song-eval = "songeval.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/wangyuyan-agent/suno-song-evaluator"
+Repository = "https://github.com/wangyuyan-agent/suno-song-evaluator.git"
+Issues = "https://github.com/wangyuyan-agent/suno-song-evaluator/issues"
+Documentation = "https://github.com/wangyuyan-agent/suno-song-evaluator#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/songeval"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "real_audio: uses the local Spring WAV fixtures",
+  "network: requires live network access",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["songeval"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

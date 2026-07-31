@@ -1,0 +1,82 @@
+name: suno-song-evaluator
+
+services:
+  app:
+    build:
+      context: .
+    image: suno-song-evaluator:0.2.0
+    command:
+      - serve
+      - --db
+      - /data/song-eval.sqlite
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8765"
+      - --allow-remote
+      - --allowed-host
+      - ${APP_DOMAIN:?Set APP_DOMAIN in .env}
+      - --auth-username
+      - ${SONG_EVAL_USERNAME:?Set SONG_EVAL_USERNAME in .env}
+      - --auth-password-file
+      - /run/secrets/song_eval_admin_password
+      - --media-dir
+      - /data/review-media
+      - --library-root
+      - /library
+    environment:
+      SONG_EVAL_LLM_BASE_URL: ${SONG_EVAL_LLM_BASE_URL:-}
+      SONG_EVAL_LLM_MODEL: ${SONG_EVAL_LLM_MODEL:-}
+    secrets:
+      - song_eval_admin_password
+    volumes:
+      - song_eval_data:/data
+      - type: bind
+        source: ${SONG_EVAL_AUDIO_DIR:-./audio}
+        target: /library
+        read_only: true
+    expose:
+      - "8765"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  caddy:
+    image: caddy:2.11.4-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN in .env}
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+
+secrets:
+  song_eval_admin_password:
+    file: ${SONG_EVAL_PASSWORD_FILE:-./secrets/admin_password.txt}
+
+volumes:
+  song_eval_data:
+  caddy_data:
+  caddy_config:

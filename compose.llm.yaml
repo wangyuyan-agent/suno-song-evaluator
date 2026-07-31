@@ -1,0 +1,11 @@
+services:
+  app:
+    environment:
+      SONG_EVAL_LLM_API_KEY_FILE: /run/secrets/song_eval_llm_api_key
+    secrets:
+      - song_eval_admin_password
+      - song_eval_llm_api_key
+
+secrets:
+  song_eval_llm_api_key:
+    file: ${SONG_EVAL_LLM_API_KEY_FILE_HOST:-./secrets/llm_api_key.txt}
