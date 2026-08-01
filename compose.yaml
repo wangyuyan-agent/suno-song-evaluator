@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: .
-    image: suno-song-evaluator:0.2.1
+    image: suno-song-evaluator:0.3.0
     command:
       - serve
       - --db
@@ -25,6 +25,10 @@ services:
       - --library-root
       - /library
     environment:
+      # Starlette spools multipart files above 1 MiB to TMPDIR. Keep those
+      # temporary bytes on the persistent data volume so valid large uploads
+      # are not constrained by the hardened 256 MiB /tmp tmpfs.
+      TMPDIR: /data/song-eval-uploads
       SONG_EVAL_LLM_BASE_URL: ${SONG_EVAL_LLM_BASE_URL:-}
       SONG_EVAL_LLM_MODEL: ${SONG_EVAL_LLM_MODEL:-}
     secrets:

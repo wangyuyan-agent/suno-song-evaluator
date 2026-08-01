@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "suno-song-evaluator"
-version = "0.2.1"
+version = "0.3.0"
 description = "Evidence-first comparison and release decision support for Suno song candidates"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -23,6 +23,7 @@ dependencies = [
   "httpx[socks]>=0.27,<1",
   "numpy>=1.26,<3",
   "pydantic>=2.8,<3",
+  "python-multipart>=0.0.20,<1",
   "pyloudnorm>=0.1.1,<1",
   "scipy>=1.12,<2",
   "soundfile>=0.12,<1",

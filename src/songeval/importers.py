@@ -36,7 +36,7 @@ from .models import (
     SourceMaterial,
     Take,
 )
-from .util import content_hash, expand_path, slugify
+from .util import content_hash, expand_path, project_key, slugify
 
 
 class SunoImportError(RuntimeError):
@@ -104,8 +104,12 @@ class SunoPublicClient:
         self,
         client: httpx.Client | None = None,
         timeout_s: float = 20.0,
+        max_audio_bytes: int = 512 * 1024 * 1024,
     ):
+        if max_audio_bytes <= 0:
+            raise ValueError("max_audio_bytes must be positive")
         self._owns_client = client is None
+        self.max_audio_bytes = max_audio_bytes
         self.client = client or httpx.Client(
             follow_redirects=False,
             timeout=timeout_s,
@@ -282,7 +286,7 @@ class SunoPublicClient:
         clip: SunoClipSnapshot,
         destination: str | Path,
         *,
-        max_bytes: int = 512 * 1024 * 1024,
+        max_bytes: int | None = None,
     ) -> Path:
         """Download captured public audio without transcoding it.
 
@@ -290,6 +294,9 @@ class SunoPublicClient:
         sibling temporary file and atomically moved into place only after the
         audio can be probed.
         """
+        effective_max_bytes = self.max_audio_bytes if max_bytes is None else max_bytes
+        if effective_max_bytes <= 0:
+            raise ValueError("max_bytes must be positive")
         if not clip.audio_url:
             raise SunoImportError(f"{clip.id}: public payload has no audio URL")
         try:
@@ -323,13 +330,16 @@ class SunoPublicClient:
                         declared_bytes = int(declared_size)
                     except ValueError:
                         declared_bytes = None
-                    if declared_bytes is not None and declared_bytes > max_bytes:
+                    if (
+                        declared_bytes is not None
+                        and declared_bytes > effective_max_bytes
+                    ):
                         raise SunoImportError(f"{clip.id}: audio exceeds size limit")
                 written = 0
                 with temporary.open("xb") as output:
                     for chunk in response.iter_bytes():
                         written += len(chunk)
-                        if written > max_bytes:
+                        if written > effective_max_bytes:
                             raise SunoImportError(
                                 f"{clip.id}: audio exceeds size limit"
                             )
@@ -786,7 +796,7 @@ def build_suno_project(
             )
         )
     brief = CreativeBriefVersion(
-        id=f"brief_{slugify(project_id)}_v1",
+        id=f"brief_{project_key(project_id)}_v1",
         project_id=project_id,
         version="v1",
         lyrics=effective_lyrics,
@@ -1087,7 +1097,7 @@ def build_local_project(
             )
         )
     brief = CreativeBriefVersion(
-        id=f"brief_{slugify(project_id)}_v1",
+        id=f"brief_{project_key(project_id)}_v1",
         project_id=project_id,
         version="v1",
         lyrics=lyrics or "",

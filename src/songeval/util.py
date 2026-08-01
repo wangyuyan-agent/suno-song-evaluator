@@ -55,3 +55,10 @@ def slugify(value: str) -> str:
     value = re.sub(r"[^\w\u4e00-\u9fff-]+", "-", value, flags=re.UNICODE)
     value = re.sub(r"-+", "-", value).strip("-")
     return value.lower() or "item"
+
+
+def project_key(project_id: str) -> str:
+    """Return a readable, filesystem-safe key without project-ID collisions."""
+
+    digest = hashlib.sha256(project_id.encode("utf-8")).hexdigest()
+    return f"{slugify(project_id)}-{digest}"

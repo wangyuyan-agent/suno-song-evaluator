@@ -10,7 +10,9 @@ decorative cards, or oversized effects.
 
 The interactive source is preserved in
 [`design/claude/Suno Song Evaluator.dc.html`](../design/claude/Suno%20Song%20Evaluator.dc.html).
-It contains four navigable product screens:
+It contains four navigable evidence/review screens. A later standalone Claude
+Design file, `Suno Intake v0.3.dc.html`, adds the fifth desktop/mobile intake
+screen used by the runtime:
 
 1. **Project overview** — evidence completeness, a lexical recommendation,
    candidate records, uncertainty, and provenance.
@@ -21,6 +23,9 @@ It contains four navigable product screens:
 4. **Reference → Suno plan** — a separate 《春》 example that keeps v2.0 as the
    edit parent and fallback while expressing the 16-second v1.4 reference as a
    structural gesture.
+5. **New analysis intake** — Suno preview/selection, local upload, advanced JSON,
+   restart-safe job state, and existing-project navigation without implying any
+   Suno account operation.
 
 ## Factual-integrity contract
 
@@ -77,8 +82,11 @@ Status must never rely on color alone; every state retains a text label.
 - Blind listening supports `Space`, `A`, `B`, arrow keys, `L`, and `N`.
 - Waveform, playhead, tick marks, and click-to-seek use one coordinate space.
 - Rapid `±5s` actions accumulate from live playback state.
-- The layout collapses to one column at 1180 px and 900 px, then uses a compact
-  fixed rail below 760 px.
+- The layout collapses to one column at 1180 px and 900 px. The intake dashboard
+  collapses to one column at 1050 px and moves its side column to a two-column
+  grid. Intake uses a compact sticky top navigation and equal-width source tabs
+  below 700 px; evidence and listening workspaces retain their task-appropriate
+  responsive navigation.
 - Muted informational text was raised to readable contrast; intentionally
   disabled controls remain visually distinct.
 
@@ -94,6 +102,7 @@ the existing analysis, persistence, and API model:
 | Blind A/B listening | opaque session payload and round submission endpoints |
 | Named review | named-review payload, lyric locator, and confirmation endpoints |
 | Reference → Suno plan | reference directive and capability-aware plan payload |
+| New analysis intake | public Suno preview, upload/snapshot APIs, persistent intake jobs |
 
 The implementation:
 
@@ -115,7 +124,7 @@ The visual layer must never turn a missing value into plausible-looking content.
 | Warm porcelain workspace with near-black type | Preserved through shared canvas, surface, ink, and hairline tokens |
 | Cobalt reserved for primary action/focus | Preserved across workspace actions, active audio, focus, and selection |
 | Dark studio-like blind screen | Preserved with opaque stimuli, real waveforms, fixed round controls, and no candidate identity |
-| Compact persistent navigation rail | Preserved on desktop and reduced to a 64 px rail on narrow screens |
+| Compact persistent navigation | Preserved as a rail on desktop and a top bar on narrow intake screens |
 | Evidence-rich overview without a total score | Bound to the current report, four separate axes, completeness, uncertainty, and provenance |
 | Named review is human-gated | Ending choice remains disabled until the final ten seconds are actually played; seeking alone does not unlock it |
 | Reference plan does not become a Sample workflow | Registered as local evidence; plan keeps the selected target as edit parent and fallback |

@@ -390,11 +390,14 @@
   }
 
   async function api(path, options = {}) {
+    const isFormData = options.body instanceof FormData;
     const response = await fetch(path, {
       ...options,
       headers: {
         Accept: "application/json",
-        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.body && !isFormData
+          ? { "Content-Type": "application/json" }
+          : {}),
         ...(options.headers || {}),
       },
     });
@@ -403,11 +406,24 @@
       ? await response.json()
       : await response.text();
     if (!response.ok) {
-      const detail =
-        payload && typeof payload === "object"
-          ? payload.detail || JSON.stringify(payload)
-          : payload;
-      throw new Error(detail || `请求失败（${response.status}）`);
+      let detail = payload;
+      if (payload && typeof payload === "object") {
+        detail = payload.detail || payload;
+      }
+      if (Array.isArray(detail)) {
+        detail = detail
+          .map((item) => {
+            if (!item || typeof item !== "object") return String(item);
+            const location = Array.isArray(item.loc) ? item.loc.join(" → ") : "";
+            return `${location ? `${location}：` : ""}${item.msg || JSON.stringify(item)}`;
+          })
+          .join("；");
+      } else if (detail && typeof detail === "object") {
+        detail = JSON.stringify(detail);
+      }
+      const error = new Error(detail || `请求失败（${response.status}）`);
+      error.status = response.status;
+      throw error;
     }
     return payload;
   }
@@ -524,7 +540,7 @@
       create("div", { className: "nav-meta" }, [
         create("strong", { text: project?.title || "本地运行" }),
         create("span", {
-          text: project ? "音频不上传" : "Evidence first",
+          text: project ? "不会上传至 Suno" : "Private analysis",
         }),
       ])
     );
@@ -643,47 +659,724 @@
     return labels[operation] || displayValue(operation, "操作未知");
   }
 
+  function intakeField(label, control, helper = "", className = "") {
+    return create("div", { className: `field${className ? ` ${className}` : ""}` }, [
+      create("label", { text: label, htmlFor: control.id }),
+      control,
+      helper ? create("small", { className: "field-helper", text: helper }) : null,
+    ]);
+  }
+
+  function humanFileSize(bytes) {
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function parseParentDeclarations(value) {
+    return value
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const separator = line.indexOf("=");
+        if (separator < 1 || separator === line.length - 1) {
+          throw new Error("父级关系必须使用 CHILD_CLIP_ID=PARENT_CLIP_ID_OR_SUNO_URL");
+        }
+        return {
+          child_clip_id: line.slice(0, separator).trim(),
+          parent: line.slice(separator + 1).trim(),
+        };
+      });
+  }
+
+  function buildIntakeComposer(onJobCreated) {
+    let source = "suno";
+    let previewClips = [];
+    const root = create("div", { className: "intake-composer", id: "new-analysis" });
+    const modeRoot = create("div", { className: "intake-mode", role: "tablist" });
+    const panel = create("div", {
+      className: "intake-panel",
+      id: "intake-source-panel",
+      role: "tabpanel",
+      tabIndex: 0,
+    });
+    const modePanels = new Map();
+
+    function metadataFields(prefix) {
+      const projectId = create("input", {
+        id: `${prefix}-project-id`,
+        className: "input",
+        required: true,
+        maxLength: 80,
+        pattern: "[\\w\\u4e00-\\u9fff\\-]{1,80}",
+        placeholder: "spring-final",
+        autocomplete: "off",
+      });
+      const title = create("input", {
+        id: `${prefix}-title`,
+        className: "input",
+        required: true,
+        maxLength: 160,
+        placeholder: "春 · 发布候选",
+        autocomplete: "off",
+      });
+      const lyrics = create("textarea", {
+        id: `${prefix}-lyrics`,
+        className: "textarea",
+        maxLength: 100000,
+        placeholder: "可留空；填写时会作为冻结歌词要求",
+      });
+      const style = create("textarea", {
+        id: `${prefix}-style`,
+        className: "textarea compact",
+        maxLength: 10000,
+        placeholder: "例如：饱满、温暖、女声克制",
+      });
+      const exclude = create("textarea", {
+        id: `${prefix}-exclude`,
+        className: "textarea compact",
+        maxLength: 10000,
+        placeholder: "例如：避免突然转冷、过长器乐绕行",
+      });
+      const analyze = create("input", {
+        id: `${prefix}-analyze`,
+        type: "checkbox",
+        checked: true,
+      });
+      return { projectId, title, lyrics, style, exclude, analyze };
+    }
+
+    function advancedFields(fields, extra = null) {
+      return create("details", { className: "intake-advanced" }, [
+        create("summary", { text: "创作约束与高级选项" }),
+        create("div", { className: "form-grid" }, [
+          intakeField("冻结歌词（可选）", fields.lyrics, "只作为评估要求，不会发送给 Suno。", "span-2"),
+          intakeField("Style（可选）", fields.style),
+          intakeField("Exclude（可选）", fields.exclude),
+          extra,
+          create("label", { className: "check-row span-2" }, [
+            fields.analyze,
+            create("span", {}, [
+              create("strong", { text: "导入完成后立即运行技术分析" }),
+              create("small", { text: "分析在你的服务器上执行，可在任务区查看进度。" }),
+            ]),
+          ]),
+        ]),
+      ]);
+    }
+
+    function resetIdentityFields(fields) {
+      fields.projectId.value = "";
+      fields.title.value = "";
+    }
+
+    function renderSuno() {
+      previewClips = [];
+      let previewedUrl = "";
+      let maxSelectable = 24;
+      const fields = metadataFields("suno");
+      const url = create("input", {
+        id: "suno-url",
+        className: "input",
+        type: "url",
+        required: true,
+        placeholder: "https://suno.com/s/... 或 /playlist/...",
+        autocomplete: "off",
+      });
+      const parents = create("textarea", {
+        id: "suno-parents",
+        className: "textarea compact mono",
+        placeholder: "每行一条：CHILD_CLIP_ID=PARENT_CLIP_ID_OR_SUNO_URL",
+      });
+      const previewStatus = create("div", { className: "form-status", role: "status" });
+      const clipRoot = create("div", { className: "intake-clips" });
+      const submit = button("创建分析项目", { variant: "primary", type: "submit", disabled: true });
+
+      function renderClips() {
+        clipRoot.replaceChildren(
+          ...previewClips.map((clip, index) => {
+            const checkbox = create("input", {
+              type: "checkbox",
+              value: clip.id,
+              checked: index < maxSelectable,
+              on: {
+                change: () => {
+                  const selected = clipRoot.querySelectorAll("input:checked");
+                  if (checkbox.checked && selected.length > maxSelectable) {
+                    checkbox.checked = false;
+                    previewStatus.className = "form-status error";
+                    previewStatus.textContent = `一次最多选择 ${maxSelectable} 个候选。`;
+                  }
+                  submit.disabled = !clipRoot.querySelector("input:checked");
+                },
+              },
+            });
+            return create("label", { className: "intake-clip" }, [
+              checkbox,
+              create("span", { className: "intake-clip-copy" }, [
+                create("strong", { text: clip.title || "未命名 Suno 候选" }),
+                create("small", { text: `${formatDuration(clip.duration)} · ${clip.id}` }),
+              ]),
+              clip.audio_url
+                ? create("audio", { controls: true, preload: "none", src: clip.audio_url })
+                : statusChip("无公开音频", "unknown"),
+            ]);
+          })
+        );
+      }
+
+      const preview = button("读取候选", {
+        onClick: async () => {
+          if (!url.reportValidity()) return;
+          preview.disabled = true;
+          previewStatus.className = "form-status";
+          previewStatus.textContent = "正在读取 Suno 公开页面…";
+          try {
+            const result = await api("/intakes/suno/preview", {
+              method: "POST",
+              body: JSON.stringify({ url: url.value.trim() }),
+            });
+            previewClips = result.clips;
+            maxSelectable = result.max_selectable || 24;
+            previewedUrl = url.value.trim();
+            renderClips();
+            submit.disabled = previewClips.length === 0;
+            previewStatus.className = "form-status success";
+            previewStatus.textContent = result.count > maxSelectable
+              ? `已读取 ${result.count} 个候选；一次最多选择 ${maxSelectable} 个。`
+              : `已读取 ${result.count} 个候选；请选择要比较的版本。`;
+          } catch (error) {
+            previewStatus.className = "form-status error";
+            previewStatus.textContent = error.message;
+          } finally {
+            preview.disabled = false;
+          }
+        },
+      });
+      url.addEventListener("input", () => {
+        if (!previewedUrl || url.value.trim() === previewedUrl) return;
+        previewedUrl = "";
+        previewClips = [];
+        clipRoot.replaceChildren();
+        submit.disabled = true;
+        previewStatus.className = "form-status";
+        previewStatus.textContent = "链接已改变，请重新读取候选。";
+      });
+      const form = create("form", {
+        className: "intake-form",
+        on: {
+          submit: async (event) => {
+            event.preventDefault();
+            if (!form.reportValidity()) return;
+            if (!previewedUrl || url.value.trim() !== previewedUrl) {
+              previewStatus.className = "form-status error";
+              previewStatus.textContent = "请先读取当前链接的候选。";
+              return;
+            }
+            const selected = [...clipRoot.querySelectorAll("input:checked")].map(
+              (item) => item.value
+            );
+            if (!selected.length) {
+              previewStatus.className = "form-status error";
+              previewStatus.textContent = "至少选择一个候选。";
+              return;
+            }
+            submit.disabled = true;
+            previewStatus.className = "form-status";
+            previewStatus.textContent = "正在创建任务…";
+            try {
+              const job = await api("/intakes/suno", {
+                method: "POST",
+                body: JSON.stringify({
+                  project_id: fields.projectId.value.trim(),
+                  title: fields.title.value.trim(),
+                  url: url.value.trim(),
+                  selected_clip_ids: selected,
+                  lyrics: fields.lyrics.value.trim() || null,
+                  style: fields.style.value.trim() || null,
+                  exclude: fields.exclude.value.trim() || null,
+                  parents: parseParentDeclarations(parents.value),
+                  analyze_now: fields.analyze.checked,
+                }),
+              });
+              previewStatus.className = "form-status success";
+              previewStatus.textContent = "任务已创建，可在下方继续查看进度。";
+              onJobCreated(job);
+              resetIdentityFields(fields);
+              submit.disabled = false;
+            } catch (error) {
+              previewStatus.className = "form-status error";
+              previewStatus.textContent = error.message;
+              submit.disabled = false;
+            }
+          },
+        },
+      }, [
+        create("div", { className: "intake-lead" }, [
+          create("div", {}, [
+            create("h3", { text: "从 Suno 公开链接开始" }),
+            create("p", { text: "先读取并核对候选，再由你明确创建分析任务。工具不会生成歌曲、上传到 Suno 或消耗 credits。" }),
+          ]),
+          statusChip("只读 Suno", "recorded"),
+        ]),
+        create("div", { className: "form-grid intake-primary-fields" }, [
+          intakeField("项目 ID", fields.projectId, "创建后不可修改；可使用中文、字母、数字和连字符。"),
+          intakeField("项目名称", fields.title),
+          intakeField("Suno 分享或 Playlist 链接", url, "只允许 suno.com。", "span-2"),
+        ]),
+        create("div", { className: "intake-preview-action" }, [preview, previewStatus]),
+        clipRoot,
+        advancedFields(
+          fields,
+          intakeField("已知父级关系（可选）", parents, "浏览器端只接受候选 Clip ID 或 Suno URL，不接受服务器路径。", "span-2")
+        ),
+        create("footer", { className: "form-footer" }, [
+          create("span", { className: "intake-privacy", text: "音频会下载到你的私有服务器，保持原始字节。" }),
+          submit,
+        ]),
+      ]);
+      return form;
+    }
+
+    function renderUpload() {
+      const fields = metadataFields("upload");
+      const fileInput = create("input", {
+        id: "upload-files",
+        type: "file",
+        accept: ".wav,.wave,.mp3,.m4a,.flac,.ogg,.aac,audio/*",
+        multiple: true,
+        required: true,
+        className: "sr-file-input",
+      });
+      const fileList = create("div", { className: "upload-file-list" });
+      const uploadStatus = create("div", { className: "form-status", role: "status" });
+      const submit = button("上传并分析", { variant: "primary", type: "submit" });
+
+      function renderFiles() {
+        const files = [...fileInput.files];
+        fileList.replaceChildren(
+          ...(files.length
+            ? files.map((file) => create("div", { className: "upload-file" }, [
+                create("span", { text: file.name }),
+                create("small", { text: humanFileSize(file.size) }),
+              ]))
+            : [create("p", { text: "支持 WAV、MP3、M4A、FLAC、OGG、AAC；最多 24 首。" })])
+        );
+      }
+      fileInput.addEventListener("change", renderFiles);
+      const drop = create("label", { className: "upload-drop", htmlFor: fileInput.id }, [
+        create("span", { className: "upload-mark", text: "+", "aria-hidden": "true" }),
+        create("strong", { text: "选择要比较的歌曲" }),
+        create("small", { text: "可一次选择多个文件；服务器会验证实际音频，不会转码。" }),
+        fileInput,
+      ]);
+      renderFiles();
+
+      const form = create("form", {
+        className: "intake-form",
+        on: {
+          submit: async (event) => {
+            event.preventDefault();
+            if (!form.reportValidity()) return;
+            const files = [...fileInput.files];
+            if (!files.length) return;
+            submit.disabled = true;
+            uploadStatus.className = "form-status";
+            uploadStatus.textContent = "正在上传并校验原始音频，请保持页面打开…";
+            const body = new FormData();
+            body.append("project_id", fields.projectId.value.trim());
+            body.append("title", fields.title.value.trim());
+            body.append("lyrics", fields.lyrics.value.trim());
+            body.append("style", fields.style.value.trim());
+            body.append("exclude", fields.exclude.value.trim());
+            body.append("analyze_now", String(fields.analyze.checked));
+            files.forEach((file) => body.append("files", file, file.name));
+            try {
+              const job = await api("/intakes/upload", { method: "POST", body });
+              uploadStatus.className = "form-status success";
+              uploadStatus.textContent = "上传完成，分析任务已进入队列。";
+              onJobCreated(job);
+              resetIdentityFields(fields);
+              submit.disabled = false;
+            } catch (error) {
+              uploadStatus.className = "form-status error";
+              uploadStatus.textContent = error.message;
+              submit.disabled = false;
+            }
+          },
+        },
+      }, [
+        create("div", { className: "intake-lead" }, [
+          create("div", {}, [
+            create("h3", { text: "上传已经下载的候选" }),
+            create("p", { text: "适合 WAV 或从 Suno 下载的完整歌曲。上传只发生在浏览器与你的私有服务器之间。" }),
+          ]),
+          statusChip("Byte exact", "measured"),
+        ]),
+        create("div", { className: "form-grid intake-primary-fields" }, [
+          intakeField("项目 ID", fields.projectId, "可使用中文、字母、数字和连字符。"),
+          intakeField("项目名称", fields.title),
+          create("div", { className: "span-2" }, [drop, fileList]),
+        ]),
+        advancedFields(fields),
+        create("footer", { className: "form-footer" }, [uploadStatus, submit]),
+      ]);
+      return form;
+    }
+
+    function renderAdvanced() {
+      const fields = metadataFields("advanced");
+      fields.projectId.required = false;
+      fields.title.required = false;
+      const payload = create("textarea", {
+        id: "advanced-json",
+        className: "textarea intake-json mono",
+        required: true,
+        spellcheck: "false",
+        placeholder: "粘贴 song-eval fetch-suno 输出的 JSON 数组，或完整 ProjectManifest JSON 对象",
+      });
+      const status = create("div", { className: "form-status", role: "status" });
+      const submit = button("验证并导入", { variant: "primary", type: "submit" });
+      const form = create("form", {
+        className: "intake-form",
+        on: {
+          submit: async (event) => {
+            event.preventDefault();
+            if (!form.reportValidity()) return;
+            submit.disabled = true;
+            status.className = "form-status";
+            status.textContent = "正在验证 JSON…";
+            try {
+              const parsed = JSON.parse(payload.value);
+              if (Array.isArray(parsed)) {
+                const job = await api("/intakes/suno/snapshot", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    project_id: fields.projectId.value.trim(),
+                    title: fields.title.value.trim(),
+                    snapshots: parsed,
+                    lyrics: fields.lyrics.value.trim() || null,
+                    style: fields.style.value.trim() || null,
+                    exclude: fields.exclude.value.trim() || null,
+                    analyze_now: fields.analyze.checked,
+                  }),
+                });
+                status.className = "form-status success";
+                status.textContent = "快照任务已创建。";
+                onJobCreated(job);
+                resetIdentityFields(fields);
+                submit.disabled = false;
+              } else if (parsed && typeof parsed === "object") {
+                const imported = await api("/manifests/import", {
+                  method: "POST",
+                  body: JSON.stringify(parsed),
+                });
+                if (fields.analyze.checked) {
+                  await api(`/projects/${encodeURIComponent(imported.project_id)}/analysis`, {
+                    method: "POST",
+                    body: JSON.stringify({ review: null }),
+                  });
+                }
+                status.className = "form-status success";
+                status.textContent = "Manifest 已导入；正在打开项目。";
+                window.location.assign(`/projects/${encodeURIComponent(imported.project_id)}`);
+              } else {
+                throw new Error("JSON 必须是 Suno 快照数组或 ProjectManifest 对象");
+              }
+            } catch (error) {
+              status.className = "form-status error";
+              status.textContent = error.message;
+              submit.disabled = false;
+            }
+          },
+        },
+      }, [
+        create("div", { className: "intake-lead" }, [
+          create("div", {}, [
+            create("h3", { text: "离线快照或完整 Manifest" }),
+            create("p", { text: "用于可复现导入。数组按 Suno 快照处理；对象按 ProjectManifest 处理，本地路径仍必须位于已配置的可信目录。" }),
+          ]),
+          statusChip("Advanced", "manual"),
+        ]),
+        create("div", { className: "form-grid" }, [
+          intakeField("项目 ID（快照数组必填）", fields.projectId),
+          intakeField("项目名称（快照数组必填）", fields.title),
+          intakeField("JSON", payload, "请求体上限为 8 MB。", "span-2"),
+        ]),
+        advancedFields(fields),
+        create("footer", { className: "form-footer" }, [status, submit]),
+      ]);
+      return form;
+    }
+
+    const modeDefinitions = [
+      ["suno", "Suno 链接"],
+      ["upload", "本地音频"],
+      ["advanced", "高级 JSON"],
+    ];
+    const renderers = {
+      suno: renderSuno,
+      upload: renderUpload,
+      advanced: renderAdvanced,
+    };
+    let modes = [];
+
+    function selectMode(value, { focus = false } = {}) {
+      source = value;
+      const activeIndex = modeDefinitions.findIndex(([key]) => key === value);
+      modes.forEach((item, index) => {
+        const active = index === activeIndex;
+        item.classList.toggle("active", active);
+        item.setAttribute("aria-selected", active ? "true" : "false");
+        item.tabIndex = active ? 0 : -1;
+      });
+      if (!modePanels.has(value)) modePanels.set(value, renderers[value]());
+      panel.setAttribute("aria-labelledby", `intake-tab-${value}`);
+      panel.replaceChildren(modePanels.get(value));
+      if (focus) modes[activeIndex].focus();
+    }
+
+    modes = modeDefinitions.map(([value, label]) => button(label, {
+      variant: value === source ? "active" : "",
+      onClick: () => selectMode(value),
+    }));
+    modes.forEach((item, index) => {
+      const value = modeDefinitions[index][0];
+      item.id = `intake-tab-${value}`;
+      item.setAttribute("role", "tab");
+      item.setAttribute("aria-controls", panel.id);
+      item.setAttribute("aria-selected", index === 0 ? "true" : "false");
+      item.tabIndex = index === 0 ? 0 : -1;
+      item.addEventListener("keydown", (event) => {
+        const current = modes.indexOf(event.currentTarget);
+        let next = current;
+        if (event.key === "ArrowRight") next = (current + 1) % modes.length;
+        else if (event.key === "ArrowLeft") next = (current - 1 + modes.length) % modes.length;
+        else if (event.key === "Home") next = 0;
+        else if (event.key === "End") next = modes.length - 1;
+        else return;
+        event.preventDefault();
+        selectMode(modeDefinitions[next][0], { focus: true });
+      });
+    });
+    modeRoot.append(...modes);
+    root.append(modeRoot, panel);
+    selectMode("suno");
+    return root;
+  }
+
+  function intakeJobCard(job, onChanged) {
+    const statusLabels = {
+      queued: "等待中",
+      running: "处理中",
+      succeeded: "已完成",
+      failed: "失败",
+      canceled: "已取消",
+    };
+    const actions = [];
+    if (job.status === "queued" || job.status === "running") {
+      actions.push(button("取消", {
+        onClick: async () => {
+          try {
+            await api(`/intake-jobs/${encodeURIComponent(job.id)}/cancel`, { method: "POST" });
+            onChanged();
+          } catch (error) {
+            toast(error.message, "error");
+          }
+        },
+      }));
+    } else if (job.status === "failed" || job.status === "canceled") {
+      let discardPartialProject = false;
+      const cleanup = button("清理", {
+        onClick: async () => {
+          try {
+            const query = discardPartialProject
+              ? "?discard_partial_project=true"
+              : "";
+            await api(`/intake-jobs/${encodeURIComponent(job.id)}${query}`, {
+              method: "DELETE",
+            });
+            onChanged();
+          } catch (error) {
+            if (
+              !discardPartialProject &&
+              error.status === 409 &&
+              error.message.includes("discard_partial_project=true")
+            ) {
+              discardPartialProject = true;
+              cleanup.textContent = "确认放弃项目";
+              toast("项目已导入但分析未完成；再次点击会删除这个不完整项目。", "error");
+              return;
+            }
+            toast(error.message, "error");
+          }
+        },
+      });
+      actions.push(
+        button("重试", {
+          variant: "primary",
+          onClick: async () => {
+            try {
+              await api(`/intake-jobs/${encodeURIComponent(job.id)}/retry`, { method: "POST" });
+              onChanged();
+            } catch (error) {
+              toast(error.message, "error");
+            }
+          },
+        }),
+        cleanup
+      );
+    } else if (job.result?.project_url) {
+      actions.push(button("打开项目", { href: job.result.project_url, variant: "primary", trailingIcon: "arrow" }));
+    }
+    return create("article", { className: `intake-job ${job.status}` }, [
+      create("div", { className: "intake-job-main" }, [
+        create("div", { className: "intake-job-title" }, [
+          create("strong", { text: job.title }),
+          statusChip(statusLabels[job.status] || job.status, job.status === "succeeded" ? "recorded" : job.status === "failed" ? "unknown" : "manual"),
+        ]),
+        create("small", { text: `${job.source.kind === "suno" ? "Suno 链接" : `${job.source.filenames.length} 个上传文件`} · ${job.step}` }),
+        create("div", { className: "job-progress", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": job.progress }, [
+          create("span", { style: `width:${job.progress}%` }),
+        ]),
+        job.error ? create("p", { className: "job-error", text: job.error }) : null,
+      ]),
+      create("div", { className: "intake-job-actions" }, actions),
+    ]);
+  }
+
   async function bootProjectList() {
     renderNavigation({ active: "projects" });
-    const projects = await api("/projects");
+    const [projects, initialJobs] = await Promise.all([
+      api("/projects"),
+      api("/intake-jobs"),
+    ]);
     const page = create("div", { className: "page" });
-    page.append(
-      pageHeader({
-        kicker: "LOCAL PROJECTS",
-        title: "歌曲评估",
-        subtitle: ["证据优先", "本地运行", "不生成总分"],
-      })
-    );
-    if (!projects.length) {
-      page.append(
-        section(
-          "项目",
-          "",
+    const projectBody = create("div");
+    const jobBody = create("div", { className: "intake-jobs" });
+    const guardrails = create("div", { className: "intake-guardrails" }, [
+      create("p", { text: "不登录或操作你的 Suno 账户，也不会点赞、删除或发布。" }),
+      create("p", { text: "不生成或再生成歌曲，不会消耗任何 Suno credits。" }),
+      create("p", { text: "“上传”只指浏览器到你的私有服务器；音频不会发往 Suno 或 LLM。" }),
+      create("p", { text: "源文件逐字节保存；未采集的元数据保持空缺，不做推测填充。" }),
+    ]);
+    let jobs = initialJobs;
+    let refreshTimer = null;
+    const projectSection = section("已有项目", `${projects.length} 个项目`, projectBody);
+
+    function scheduleRefresh(delay) {
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => {
+        refreshTimer = null;
+        refreshJobs();
+      }, delay);
+    }
+
+    function renderProjects(items) {
+      const count = projectSection.querySelector(".section-title small");
+      if (count) count.textContent = `${items.length} 个项目`;
+      if (!items.length) {
+        projectBody.replaceChildren(
           emptyState(
-            "还没有项目",
-            "使用 song-eval intake 导入 Suno 链接、快照或本地音频后，项目会出现在这里。"
+            "还没有已完成项目",
+            "可直接在上方从 Suno 链接或本地音频创建第一个分析项目。"
+          )
+        );
+        return;
+      }
+      projectBody.replaceChildren(
+        create(
+          "div",
+          { className: "project-list" },
+          items.map((project) =>
+            create("a", {
+              className: "project-row",
+              href: `/projects/${encodeURIComponent(project.id)}`,
+            }, [
+              create("div", {}, [
+                create("strong", { text: project.title }),
+                create("small", { text: project.id }),
+              ]),
+              create("span", { html: ICONS.arrow, "aria-hidden": "true" }),
+            ])
           )
         )
       );
-    } else {
-      const list = create(
-        "div",
-        { className: "project-list" },
-        projects.map((project) =>
-          create("a", {
-            className: "project-row",
-            href: `/projects/${encodeURIComponent(project.id)}`,
-          }, [
-            create("div", {}, [
-              create("strong", { text: project.title }),
-              create("small", { text: project.id }),
-            ]),
-            create("span", { html: ICONS.arrow, "aria-hidden": "true" }),
-          ])
-        )
-      );
-      page.append(section("项目", `${projects.length} 个本地项目`, list));
     }
+
+    async function refreshJobs() {
+      const previous = new Map(jobs.map((job) => [job.id, job.status]));
+      try {
+        jobs = await api("/intake-jobs");
+        renderJobs();
+        const newlySucceeded = jobs.some(
+          (job) => job.status === "succeeded" && previous.get(job.id) !== "succeeded"
+        );
+        if (newlySucceeded) {
+          renderProjects(await api("/projects"));
+        }
+      } catch (error) {
+        toast(error.message, "error");
+        if (jobs.some((job) => job.status === "queued" || job.status === "running")) {
+          scheduleRefresh(3000);
+        }
+      }
+    }
+
+    function renderJobs() {
+      jobBody.replaceChildren(
+        ...(jobs.length
+          ? jobs.map((job) => intakeJobCard(job, refreshJobs))
+          : [
+              create("p", {
+                className: "intake-jobs-empty",
+                text: "还没有导入任务。上传或读取 Suno 候选后，进度会显示在这里。",
+              }),
+            ])
+      );
+      if (jobs.some((job) => job.status === "queued" || job.status === "running")) {
+        scheduleRefresh(900);
+      } else if (refreshTimer !== null) {
+        window.clearTimeout(refreshTimer);
+        refreshTimer = null;
+      }
+    }
+
+    const composer = buildIntakeComposer((job) => {
+      jobs = [job, ...jobs.filter((item) => item.id !== job.id)];
+      renderJobs();
+      jobBody.scrollIntoView({ behavior: "smooth", block: "center" });
+      scheduleRefresh(300);
+    });
+    window.addEventListener("pagehide", () => {
+      if (refreshTimer !== null) window.clearTimeout(refreshTimer);
+    }, { once: true });
+    page.append(
+      pageHeader({
+        kicker: "NEW ANALYSIS",
+        title: "听清候选之间的区别",
+        subtitle: ["Suno 链接或本地音频", "私有服务器分析", "不生成歌曲"],
+        actions: [
+          button("查看已有项目", {
+            onClick: () => projectBody.scrollIntoView({ behavior: "smooth" }),
+          }),
+        ],
+      })
+    );
+    page.append(
+      create("div", { className: "intake-dashboard" }, [
+        create("div", { className: "intake-primary-column" }, [
+          section("新建分析项目", "先确认来源，再开始处理", composer, "不会操作你的 Suno 账户"),
+          section("导入与分析任务", "可恢复、取消或重试", jobBody),
+        ]),
+        create("aside", { className: "intake-side-column", "aria-label": "项目与安全边界" }, [
+          projectSection,
+          section("这个入口不会做什么", "明确边界", guardrails),
+        ]),
+      ])
+    );
+    renderProjects(projects);
+    renderJobs();
     main.replaceChildren(page);
     setBusy(false);
   }

@@ -18,7 +18,7 @@ Serve for tailnet-only HTTPS. Application Basic Auth remains enabled.
 
 ## Account model
 
-Version 0.2.1 supports one trusted administrator account. It does not provide
+Version 0.3.0 supports one trusted administrator account. It does not provide
 registration, password recovery, per-project roles, multi-tenant isolation, or
 an audit log. Do not expose one deployment to mutually untrusted users. For
 teams, put an identity-aware proxy in front and keep the application Basic Auth
@@ -99,18 +99,19 @@ and preserves data in an explicit named volume:
 
 ```bash
 sudo ./deploy/prepare-linux.sh
-docker build --tag suno-song-evaluator:0.2.1 .
+docker build --tag suno-song-evaluator:0.3.0 .
 docker volume create song-eval-docker-run-data
 
 docker run --detach --name song-eval-docker-run \
   --restart unless-stopped \
   --publish 127.0.0.1:8765:8765 \
+  --env TMPDIR=/data/song-eval-uploads \
   --read-only --tmpfs /tmp:rw,noexec,nosuid,size=256m \
   --cap-drop ALL --security-opt no-new-privileges:true \
   --mount type=volume,source=song-eval-docker-run-data,target=/data \
   --mount type=bind,source="$(pwd)/audio",target=/library,readonly \
   --mount type=bind,source="$(pwd)/secrets/admin_password.txt",target=/run/secrets/song_eval_admin_password,readonly \
-  suno-song-evaluator:0.2.1 serve \
+  suno-song-evaluator:0.3.0 serve \
   --db /data/song-eval.sqlite \
   --host 0.0.0.0 --port 8765 --allow-remote \
   --allowed-host localhost \
@@ -209,11 +210,12 @@ service, also restrict source IPs at the firewall or place the stack behind a
 VPN/identity-aware proxy. Basic Auth does not provide registration, MFA, or
 brute-force rate limiting.
 
-The application state lives in the `song_eval_data` named volume. The host
-`audio/` directory is mounted read-only at `/library`. Copy candidate audio
-there before importing it, and keep copied files group-readable by GID 10001
-(for example mode `0640`). Original files are read byte-for-byte and are never
-normalized in place.
+The application state lives in the `song_eval_data` named volume. It includes
+the SQLite database, byte-exact Web-intake media, retained staging files for
+failed/retryable uploads, generated reports, and blind-review media. The host
+`audio/` directory remains a read-only optional library at `/library`; files
+there must be group-readable by GID 10001 (for example mode `0640`). Original
+files are read byte-for-byte and are never normalized in place.
 
 Inspect health and logs:
 
@@ -315,10 +317,11 @@ Whisper-compatible JSON transcript instead.
 
 ## Backup boundary
 
-The SQLite database and generated review media are the durable state. Back up
-the `song_eval_data` volume while the app is stopped, or use a filesystem
-snapshot with equivalent consistency guarantees. The original audio library is
-outside that volume and must be backed up separately.
+The SQLite database, intake media, retryable upload staging, generated reports,
+and review media are durable state. Back up the complete `song_eval_data` volume
+while the app is stopped, or use a filesystem snapshot with equivalent
+consistency guarantees. The optional original `/library` bind mount is outside
+that volume and must be backed up separately.
 
 Never:
 

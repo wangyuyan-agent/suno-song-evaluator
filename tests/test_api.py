@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from pathlib import Path
@@ -30,6 +31,7 @@ from songeval.models import (
     StoredListeningBundle,
     Take,
 )
+from songeval.util import project_key
 
 
 def create_app(*args, **kwargs):
@@ -41,6 +43,48 @@ def create_app(*args, **kwargs):
         extra_allowed_hosts=("testserver",),
         **kwargs,
     )
+
+
+def test_body_limit_does_not_replace_an_already_started_response():
+    sent = []
+
+    async def receive():
+        return {"type": "http.request", "body": b"too large", "more_body": False}
+
+    async def send(message):
+        sent.append(message)
+
+    async def downstream(_scope, limited_receive, tracked_send):
+        await tracked_send(
+            {
+                "type": "http.response.start",
+                "status": 200,
+                "headers": [],
+            }
+        )
+        try:
+            await limited_receive()
+        except api_module.RequestBodyTooLarge:
+            await tracked_send({"type": "http.response.body", "body": b""})
+
+    middleware = api_module.RequestBodyLimitMiddleware(
+        downstream,
+        default_limit_bytes=4,
+        upload_limit_bytes=4,
+    )
+    asyncio.run(
+        middleware(
+            {"type": "http", "path": "/stream", "headers": []},
+            receive,
+            send,
+        )
+    )
+
+    assert [message["type"] for message in sent] == [
+        "http.response.start",
+        "http.response.body",
+    ]
+    assert sent[0]["status"] == 200
 
 
 def test_production_app_does_not_trust_testserver_by_default(tmp_path):
@@ -477,7 +521,7 @@ def test_api_lyric_defect_description_normalizes_whitespace():
     assert request.description == "heard a changed line"
 
 
-def test_api_policy_ids_slugify_project_id(tmp_path):
+def test_api_policy_ids_are_readable_and_collision_resistant(tmp_path):
     app = create_app(tmp_path / "policy-slug.sqlite", media_dir=tmp_path / "media")
     app.state.database.save(ProjectRecord(id="Project With Space", title="Policy"))
     with TestClient(app) as client:
@@ -486,7 +530,7 @@ def test_api_policy_ids_slugify_project_id(tmp_path):
             json={"confirm": True},
         )
         assert response.status_code == 200, response.text
-        assert response.json()["id"] == "policy_project-with-space_v1"
+        assert response.json()["id"] == f"policy_{project_key('Project With Space')}_v1"
 
 
 def test_api_missing_allowlisted_ui_asset_returns_404(tmp_path, monkeypatch):

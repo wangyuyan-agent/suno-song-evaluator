@@ -1,6 +1,6 @@
 # Requirements and verification matrix
 
-This matrix maps the frozen v0.1 invariants and the v0.2 functional-closure
+This matrix maps the frozen v0.1 invariants and the v0.2/v0.3 functional-closure
 requirements to implementation and tests. A green command alone is not
 completion evidence; the named tests must exercise the corresponding invariant.
 
@@ -68,3 +68,10 @@ completion evidence; the named tests must exercise the corresponding invariant.
 | Server secrets may be file-mounted | auth password and LLM API key file readers | `test_cli.py`, `test_api.py`, Compose validation |
 | Reproducible server audio stack | locked uv image + FFmpeg/libsndfile Dockerfile | package build, container smoke test |
 | Responsive and reduced-motion presentation | `web/app.css` media queries | mobile browser acceptance, source inspection |
+| Web Suno preview requires explicit clip selection | `/intakes/suno/preview`, intake composer | `test_intake_api.py`, browser acceptance |
+| Web uploads are byte-exact and actual-audio validated | streaming staging + `audio_identity` | `test_intake_api.py`, real WAV browser acceptance |
+| Intake jobs survive restart and support cancel/retry | `IntakeJobStore`, `IntakeWorker` | `test_intake_api.py` |
+| Failed report materialization repairs without re-upload | idempotent service + atomic report files | `test_intake_api.py` |
+| Browser clients cannot supply server file paths | typed public request models + server staging | `test_intake_api.py`, source inspection |
+| Cross-site writes and oversized bodies are rejected | origin/fetch-site + body-limit middleware | `test_intake_api.py` |
+| Suno fetches remain on controlled hosts and bounded | validated redirects + clip/file/duration limits | `test_importers.py`, `test_intake_api.py` |

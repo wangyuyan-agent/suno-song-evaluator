@@ -30,6 +30,9 @@ post-production.
 - a production local workspace with project overview, real decoded waveforms,
   blind A/B listening, named review, evidence export, and reference-to-plan
   screens;
+- a Web intake workspace for public Suno links, direct audio uploads, saved
+  snapshots, and trusted manifests, with restart-safe job progress, cancellation,
+  retry, and cleanup;
 - optional local MLX-Whisper transcription or existing Whisper JSON ingestion;
 - separate Compliance, Craft, Release Readiness, and Distinctiveness views;
 - T1/T2/T3 and common-mode failure handling;
@@ -67,7 +70,27 @@ uv run song-eval --help
 No API key is required for analysis. Optional LLM narration reads only the
 structured evidence packet and can target any OpenAI-compatible endpoint.
 
-## Basic workflow: no hand-written manifest
+## Web workflow: upload or paste a Suno link
+
+```bash
+uv run song-eval serve --db runtime/song-eval.sqlite
+```
+
+Open <http://127.0.0.1:8765/>. The first screen supports three explicit paths:
+
+1. paste a public `suno.com` song or playlist link, preview the captured clips,
+   select the versions to compare, then create the task;
+2. upload one or more WAV, MP3, M4A, FLAC, OGG, or AAC files already on your
+   device;
+3. paste a saved `fetch-suno` JSON array or a complete trusted manifest.
+
+The browser shows queued/running/completed/failed state and supports cancel,
+retry, and bounded cleanup. It never signs in to Suno, uploads to Suno, generates
+music, publishes, or spends credits. Uploaded bytes travel only between the
+browser and this server; source audio is cached byte-for-byte and never
+post-processed.
+
+## CLI workflow: no hand-written manifest
 
 ```bash
 # This downloads the captured public audio byte-for-byte, builds the project,
@@ -83,8 +106,8 @@ uv run song-eval intake seventeen-replay \
   --media-dir /path/to/cached/public-audio \
   --db seventeen-replay.sqlite
 
-# Start the local workspace. The overview can create the opaque blind session;
-# it also exposes named review, evidence export, and reference planning.
+# Start the local workspace. The root page can create another project; completed
+# projects expose blind review, named review, evidence export, and planning.
 uv run song-eval serve --db seventeen.sqlite
 
 # If an imported manifest points to audio outside the default song-eval-media
@@ -93,7 +116,7 @@ uv run song-eval serve --db seventeen.sqlite \
   --library-root /path/to/audio-library
 
 # Open:
-# http://127.0.0.1:8765/projects/seventeen
+# http://127.0.0.1:8765/
 ```
 
 `serve` is local-only by default and accepts only `127.0.0.1`, `localhost`, or
@@ -166,7 +189,9 @@ in process arguments or environment variables.
 The image downloads FFmpeg/ffprobe and libsndfile during build, then reproduces
 Python dependencies from `uv.lock`. Authentication is deliberately a single
 administrator account—there is no registration, RBAC, password recovery, MFA,
-brute-force rate limiting, or multi-tenant isolation in v0.2.1.
+brute-force rate limiting, or multi-tenant isolation in v0.3.0. The `/data`
+volume persists SQLite state, intake media, upload retries, generated reports,
+and blind-review media.
 
 See [`docs/deployment.md`](docs/deployment.md) for commands for all four paths,
 Caddy isolation smoke tests, DNS, secrets, LLM, backup, upgrade, and threat

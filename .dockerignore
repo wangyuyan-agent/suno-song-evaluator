@@ -36,4 +36,8 @@ dist
 reports
 runtime
 secrets
+song-eval-media
+song-eval-reports
+song-eval-review-media
+song-eval-uploads
 tmp

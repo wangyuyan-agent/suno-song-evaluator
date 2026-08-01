@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Security fixes are applied to the latest `0.2.x` release.
+Security fixes are applied to the latest `0.3.x` release.
 
 ## Reporting a vulnerability
 
@@ -22,12 +22,19 @@ private Suno metadata in a public issue.
   internal. Caddy provides HTTPS and security headers.
 - The private Compose overlay publishes the app only on host loopback and
   relies on Tailscale Serve for tailnet-only HTTPS. It must not use Funnel.
+- The application applies no-store, frame isolation, MIME-sniffing, referrer,
+  permissions, and Content Security Policy headers even when Caddy is absent;
+  Caddy additionally owns HSTS for public HTTPS.
 - Linux deployment secrets are root-managed files readable only by the
   non-root container identity (numeric UID/GID 10001).
 - Artifact, source, reference, and listening-media paths must resolve under
   configured trusted roots. Symlink escapes and historical out-of-root paths
   are rejected.
 - Shared evidence exports redact local filesystem paths.
+- Web intake accepts only server-generated staging paths, validates actual audio
+  before queuing, limits request/file/count/duration/pending bytes, and rejects
+  cross-site state-changing requests. Suno downloads remain restricted to
+  Suno-controlled hosts.
 - The optional LLM API key is read from process configuration or a secret file.
   Requests cannot substitute another provider URL.
 

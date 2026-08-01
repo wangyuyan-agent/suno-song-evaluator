@@ -80,6 +80,41 @@ def test_cli_help_exposes_required_workflows():
         assert command in result.output
 
 
+def test_cli_intake_reports_invalid_project_id_without_traceback(tmp_path, tone_a):
+    result = runner.invoke(
+        app,
+        [
+            "intake",
+            "invalid/project",
+            "--db",
+            str(tmp_path / "invalid.sqlite"),
+            "--audio",
+            str(tone_a),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "project_id" in result.output
+    assert "Traceback" not in result.output
+
+
+def test_cli_intake_reports_invalid_suno_url_without_traceback(tmp_path):
+    result = runner.invoke(
+        app,
+        [
+            "intake",
+            "invalid-suno-url",
+            "--db",
+            str(tmp_path / "invalid-suno.sqlite"),
+            "--suno-url",
+            "https://example.com/not-suno",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "not on suno.com" in result.output
+    assert "Traceback" not in result.output
+
+
 def test_cli_local_intake_creates_project_without_manifest(
     tmp_path,
     tone_a,

@@ -16,13 +16,12 @@ from .audio import verify_deterministic_crop
 from .db import Database
 from .enums import Axis, PreservationIntent
 from .importers import (
-    ParentDeclaration,
+    SunoImportError,
     SunoPublicClient,
-    build_local_project,
-    build_suno_project,
     load_manifest,
     load_suno_snapshots,
 )
+from .intake import IntakeParent, IntakePaths, IntakeRequest, IntakeService
 from .listening import (
     BlindBundle,
     build_blind_session,
@@ -65,7 +64,7 @@ from .reference_workflow import (
     registered_directive_target_id,
 )
 from .reporting import render_markdown
-from .util import slugify
+from .util import project_key
 
 app = typer.Typer(
     name="song-eval",
@@ -157,7 +156,7 @@ def configure_policy_command(
             existing = database.list(ProjectDecisionPolicy, project_id)
             version_number = len(existing) + 1
             policy = ProjectDecisionPolicy(
-                id=f"policy_{slugify(project_id)}_v{version_number}",
+                id=f"policy_{project_key(project_id)}_v{version_number}",
                 project_id=project_id,
                 version=f"v{version_number}",
                 declared_by_user=True,
@@ -349,24 +348,29 @@ def intake_command(
     destination = (
         media_dir
         if media_dir is not None
-        else db.resolve().parent / "song-eval-media" / slugify(project_id)
+        else db.resolve().parent / "song-eval-media" / project_key(project_id)
     )
-    declarations: list[ParentDeclaration] = []
+    declarations: list[IntakeParent] = []
     for value in parent or ():
         child, separator, declared_parent = value.partition("=")
         if not separator or not child.strip() or not declared_parent.strip():
             raise typer.BadParameter(
                 "--parent must use CHILD_CLIP_ID=PARENT_CLIP_ID_OR_PATH_OR_URL"
             )
-        declarations.append(
-            ParentDeclaration(
-                child_clip_id=child.strip(),
-                parent=declared_parent.strip(),
+        try:
+            declarations.append(
+                IntakeParent(
+                    child_clip_id=child.strip(),
+                    parent=declared_parent.strip(),
+                )
             )
-        )
-    initial_report = None
-    report_json: Path | None = None
-    report_markdown: Path | None = None
+        except ValidationError as error:
+            raise typer.BadParameter(str(error)) from error
+    destination_reports = (
+        report_dir
+        if report_dir is not None
+        else db.resolve().parent / "song-eval-reports" / project_key(project_id)
+    )
     with Database(db) as database:
         if database.get(ProjectRecord, project_id) is not None:
             raise typer.BadParameter(
@@ -374,80 +378,78 @@ def intake_command(
                 f"`song-eval analyze {project_id} --db {db}` to resume analysis, "
                 "or choose a new project ID for a separate import"
             )
-        if local_audio:
-            result = build_local_project(
-                local_audio,
-                project_id=project_id,
-                title=title or project_id,
-                media_dir=destination,
-                lyrics=lyrics,
-                style=style,
-                exclude=exclude,
-            )
-        else:
-            with SunoPublicClient() as client:
-                clips = (
-                    load_suno_snapshots(snapshot)
-                    if snapshot is not None
-                    else client.fetch(suno_url or "")
-                )
-                result = build_suno_project(
-                    clips,
-                    project_id=project_id,
-                    title=title or project_id,
-                    media_dir=destination,
-                    client=client,
-                    download_audio=download_audio,
-                    lyrics=lyrics,
-                    style=style,
-                    exclude=exclude,
-                    parent_declarations=declarations,
-                )
-        database.import_manifest(result.manifest)
-        if analyze_now:
-            try:
-                initial_report = ProjectAnalyzer(result.manifest).analyze()
-            except (OSError, ValueError) as error:
-                raise typer.BadParameter(
-                    f"project imported, but initial analysis failed: {error}"
-                ) from error
-            with database.transaction():
-                database.save(
-                    StoredAnalysisReport(
-                        id=initial_report.run.id,
-                        project_id=project_id,
-                        report=initial_report,
-                    )
-                )
-            destination_reports = (
-                report_dir
-                if report_dir is not None
-                else db.resolve().parent / "song-eval-reports" / slugify(project_id)
-            )
-            report_json = destination_reports / f"{initial_report.run.id}.json"
-            report_markdown = destination_reports / f"{initial_report.run.id}.md"
-            _write_json(report_json, initial_report)
-            report_markdown.parent.mkdir(parents=True, exist_ok=True)
-            report_markdown.write_text(
-                render_markdown(initial_report),
-                encoding="utf-8",
-            )
+    try:
+        intake_request = IntakeRequest(
+            project_id=project_id,
+            title=title or project_id,
+            kind="upload" if local_audio else "suno",
+            suno_url=suno_url,
+            snapshots=(
+                tuple(load_suno_snapshots(snapshot)) if snapshot is not None else ()
+            ),
+            upload_paths=tuple(str(path.resolve()) for path in local_audio),
+            original_filenames=tuple(path.name for path in local_audio),
+            lyrics=lyrics,
+            style=style,
+            exclude=exclude,
+            parents=tuple(declarations),
+            download_audio=download_audio,
+            analyze_now=analyze_now,
+            allow_local_parent_paths=True,
+            allow_external_upload_paths=True,
+            media_dir_override=str(destination.resolve()),
+            report_dir_override=str(destination_reports.resolve()),
+        )
+    except (OSError, ValueError, SunoImportError) as error:
+        raise typer.BadParameter(str(error)) from error
+    service = IntakeService(
+        db,
+        IntakePaths(
+            media_root=db.resolve().parent / "song-eval-media",
+            report_root=db.resolve().parent / "song-eval-reports",
+            upload_root=db.resolve().parent,
+        ),
+    )
+    try:
+        intake_result = service.run(intake_request)
+    except (OSError, ValueError, SunoImportError) as error:
+        with Database(db) as database:
+            imported = database.get(ProjectRecord, project_id) is not None
+        if imported and analyze_now:
+            raise typer.BadParameter(
+                f"project imported, but initial analysis failed: {error}"
+            ) from error
+        raise typer.BadParameter(str(error)) from error
+
+    with Database(db) as database:
+        manifest = database.export_manifest(project_id)
+        reports = database.list(StoredAnalysisReport, project_id)
+    initial_report = (
+        max(reports, key=lambda item: item.created_at).report if reports else None
+    )
+    report_json = (
+        destination_reports / f"{initial_report.run.id}.json"
+        if initial_report is not None
+        else None
+    )
+    report_markdown = (
+        destination_reports / f"{initial_report.run.id}.md"
+        if initial_report is not None
+        else None
+    )
     if manifest_out is not None:
-        _write_json(manifest_out, result.manifest)
+        _write_json(manifest_out, manifest)
     typer.echo(
         json.dumps(
             {
                 "project_id": project_id,
-                "artifacts": len(result.manifest.artifacts),
-                "candidates": sum(
-                    artifact.raw_payload.get("analysis_role") != "lineage_only"
-                    for artifact in result.manifest.artifacts
-                ),
+                "artifacts": len(manifest.artifacts),
+                "candidates": intake_result["candidates"],
                 "media_dir": str(destination.resolve()),
                 "manifest_out": (
                     str(manifest_out.resolve()) if manifest_out is not None else None
                 ),
-                "warnings": list(result.warnings),
+                "warnings": intake_result["warnings"],
                 "initial_analysis": (
                     {
                         "run_id": initial_report.run.id,
@@ -1078,7 +1080,9 @@ def register_reference_command(
                 media_dir=(
                     media_dir
                     if media_dir is not None
-                    else db.resolve().parent / "song-eval-media" / slugify(project_id)
+                    else db.resolve().parent
+                    / "song-eval-media"
+                    / project_key(project_id)
                 ),
                 intent=intent,
                 start_s=start_s,

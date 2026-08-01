@@ -2,17 +2,24 @@ from __future__ import annotations
 
 import base64
 import binascii
+import contextlib
+import hashlib
 import html
 import json
+import logging
 import os
 import secrets
+import shutil
 import tempfile
+import threading
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
+from urllib.parse import urlparse
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import (
     FileResponse,
@@ -24,9 +31,28 @@ from pydantic import BaseModel, Field, field_validator
 
 from . import __version__
 from .analyzer import ProjectAnalyzer
+from .audio import audio_identity
 from .db import Database
 from .enums import Axis, PreservationIntent
-from .importers import SunoImportError, SunoPublicClient, hydrate_local_artifacts
+from .importers import (
+    SunoClipSnapshot,
+    SunoImportError,
+    SunoPublicClient,
+    hydrate_local_artifacts,
+)
+from .intake import (
+    PROJECT_ID_PATTERN,
+    IntakeConflict,
+    IntakeJob,
+    IntakeJobStore,
+    IntakeParent,
+    IntakePaths,
+    IntakeRequest,
+    IntakeService,
+    IntakeWorker,
+    remove_orphan_upload_staging,
+    remove_upload_staging,
+)
 from .listening import (
     BlindBundle,
     build_blind_session,
@@ -60,7 +86,9 @@ from .reference_workflow import (
     registered_directive_target_id,
 )
 from .reporting import render_markdown
-from .util import expand_path, slugify
+from .util import expand_path, project_key
+
+logger = logging.getLogger(__name__)
 
 WEB_ROOT = Path(__file__).with_name("web")
 WEB_ASSETS = {
@@ -68,6 +96,129 @@ WEB_ASSETS = {
     "app.js": "text/javascript; charset=utf-8",
     "icon.svg": "image/svg+xml",
 }
+
+
+class RequestBodyTooLarge(RuntimeError):
+    pass
+
+
+class RequestBodyLimitMiddleware:
+    """Reject oversized request streams before multipart or JSON parsing."""
+
+    def __init__(
+        self,
+        app,
+        *,
+        default_limit_bytes: int,
+        upload_limit_bytes: int,
+    ):
+        self.app = app
+        self.default_limit_bytes = default_limit_bytes
+        self.upload_limit_bytes = upload_limit_bytes
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        limit = (
+            self.upload_limit_bytes
+            if scope.get("path") == "/intakes/upload"
+            else self.default_limit_bytes
+        )
+        headers = {key.lower(): value for key, value in scope.get("headers", ())}
+        raw_length = headers.get(b"content-length")
+        if raw_length is not None:
+            with contextlib.suppress(ValueError):
+                if int(raw_length) > limit:
+                    response = JSONResponse(
+                        status_code=413,
+                        content={"detail": "request body exceeds the server limit"},
+                    )
+                    await response(scope, receive, send)
+                    return
+
+        consumed = 0
+        exceeded = False
+        replacement_sent = False
+        response_started = False
+
+        async def limited_receive():
+            nonlocal consumed, exceeded
+            message = await receive()
+            if message["type"] == "http.request":
+                consumed += len(message.get("body", b""))
+                if consumed > limit:
+                    exceeded = True
+                    raise RequestBodyTooLarge
+            return message
+
+        async def tracked_send(message):
+            nonlocal replacement_sent, response_started
+            if exceeded and not response_started:
+                if not replacement_sent:
+                    replacement_sent = True
+                    response = JSONResponse(
+                        status_code=413,
+                        content={"detail": "request body exceeds the server limit"},
+                    )
+                    await response(scope, receive, send)
+                return
+            if message["type"] == "http.response.start":
+                response_started = True
+            await send(message)
+
+        try:
+            await self.app(scope, limited_receive, tracked_send)
+        except RequestBodyTooLarge:
+            if response_started or replacement_sent:
+                raise
+            response = JSONResponse(
+                status_code=413,
+                content={"detail": "request body exceeds the server limit"},
+            )
+            await response(scope, receive, send)
+
+
+class SecurityHeadersMiddleware:
+    """Apply browser isolation and no-store defaults in every topology."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def secured_send(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", ()))
+                present = {key.lower() for key, _ in headers}
+                defaults = {
+                    b"cache-control": b"no-store",
+                    b"content-security-policy": (
+                        b"default-src 'self'; script-src 'self'; "
+                        b"style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+                        b"media-src 'self' https://*.suno.ai https://*.suno.com; "
+                        b"connect-src 'self'; object-src 'none'; base-uri 'none'; "
+                        b"frame-ancestors 'none'; form-action 'self'"
+                    ),
+                    b"permissions-policy": (
+                        b"camera=(), microphone=(), geolocation=()"
+                    ),
+                    b"referrer-policy": b"no-referrer",
+                    b"x-content-type-options": b"nosniff",
+                    b"x-frame-options": b"DENY",
+                }
+                headers.extend(
+                    (key, value)
+                    for key, value in defaults.items()
+                    if key not in present
+                )
+                message["headers"] = headers
+            await send(message)
+
+        await self.app(scope, receive, secured_send)
 
 
 def _basic_credentials(header: str | None) -> tuple[bytes, bytes] | None:
@@ -137,6 +288,40 @@ def _render_ui_shell(
 
 class SunoFetchRequest(BaseModel):
     url: str
+
+
+class SunoIntakeRequest(BaseModel):
+    project_id: str = Field(pattern=PROJECT_ID_PATTERN)
+    title: str = Field(min_length=1, max_length=160)
+    url: str = Field(min_length=1, max_length=2048)
+    selected_clip_ids: tuple[str, ...] = ()
+    lyrics: str | None = Field(default=None, max_length=100_000)
+    style: str | None = Field(default=None, max_length=10_000)
+    exclude: str | None = Field(default=None, max_length=10_000)
+    parents: tuple[IntakeParent, ...] = ()
+    analyze_now: bool = True
+
+    @field_validator("project_id", "title", mode="before")
+    @classmethod
+    def strip_required_text(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+
+class SunoSnapshotIntakeRequest(BaseModel):
+    project_id: str = Field(pattern=PROJECT_ID_PATTERN)
+    title: str = Field(min_length=1, max_length=160)
+    snapshots: tuple[SunoClipSnapshot, ...] = Field(min_length=1, max_length=50)
+    selected_clip_ids: tuple[str, ...] = ()
+    lyrics: str | None = Field(default=None, max_length=100_000)
+    style: str | None = Field(default=None, max_length=10_000)
+    exclude: str | None = Field(default=None, max_length=10_000)
+    parents: tuple[IntakeParent, ...] = ()
+    analyze_now: bool = True
+
+    @field_validator("project_id", "title", mode="before")
+    @classmethod
+    def strip_required_text(cls, value):
+        return value.strip() if isinstance(value, str) else value
 
 
 class AnalyzeRequest(BaseModel):
@@ -213,10 +398,18 @@ def create_app(
     db_path: str | Path,
     *,
     media_dir: str | Path | None = None,
+    intake_media_dir: str | Path | None = None,
+    upload_dir: str | Path | None = None,
+    report_dir: str | Path | None = None,
     library_roots: tuple[str | Path, ...] = (),
     extra_allowed_hosts: tuple[str, ...] = (),
     auth_username: str | None = None,
     auth_password: str | None = None,
+    max_upload_files: int = 24,
+    max_upload_file_bytes: int = 512 * 1024 * 1024,
+    max_upload_total_bytes: int = 2 * 1024 * 1024 * 1024,
+    max_upload_pending_bytes: int = 4 * 1024 * 1024 * 1024,
+    max_audio_duration_s: float = 1800.0,
 ) -> FastAPI:
     if (auth_username is None) != (auth_password is None):
         raise ValueError("auth_username and auth_password must be configured together")
@@ -242,26 +435,92 @@ def create_app(
                 "extra_allowed_hosts must contain exact hostnames or IP addresses"
             )
     database = Database(db_path)
+    resolved_db_path = Path(db_path).expanduser().resolve()
     media_root = (
         Path(media_dir or tempfile.mkdtemp(prefix="song-eval-media-"))
         .expanduser()
         .resolve()
     )
     media_root.mkdir(parents=True, exist_ok=True)
+    intake_media_root = (
+        Path(intake_media_dir or resolved_db_path.parent / "song-eval-media")
+        .expanduser()
+        .resolve()
+    )
+    upload_root = (
+        Path(upload_dir or resolved_db_path.parent / "song-eval-uploads")
+        .expanduser()
+        .resolve()
+    )
+    report_root = (
+        Path(report_dir or resolved_db_path.parent / "song-eval-reports")
+        .expanduser()
+        .resolve()
+    )
+    for root in (intake_media_root, upload_root, report_root):
+        root.mkdir(parents=True, exist_ok=True)
+    if (
+        min(
+            max_upload_files,
+            max_upload_file_bytes,
+            max_upload_total_bytes,
+            max_upload_pending_bytes,
+        )
+        <= 0
+        or max_audio_duration_s <= 0
+    ):
+        raise ValueError("upload limits must be positive")
+    if max_upload_file_bytes > max_upload_total_bytes:
+        raise ValueError("per-file upload limit cannot exceed total upload limit")
+    if max_upload_total_bytes > max_upload_pending_bytes:
+        raise ValueError(
+            "total upload limit cannot exceed the pending upload storage limit"
+        )
     trusted_media_roots = (
         media_root,
+        intake_media_root,
         *(Path(root).expanduser().resolve() for root in library_roots),
+    )
+    intake_store = IntakeJobStore(resolved_db_path)
+    intake_service = IntakeService(
+        resolved_db_path,
+        IntakePaths(
+            media_root=intake_media_root,
+            report_root=report_root,
+            upload_root=upload_root,
+        ),
+        max_suno_clips=max_upload_files,
+        max_audio_file_bytes=max_upload_file_bytes,
+        max_audio_duration_s=max_audio_duration_s,
+    )
+    intake_worker = IntakeWorker(
+        intake_store,
+        intake_service,
+        cleanup_upload=lambda job: remove_upload_staging(job, upload_root),
     )
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
-        yield
-        database.close()
+        try:
+            remove_orphan_upload_staging(intake_store, upload_root)
+        except OSError:
+            logger.exception("unable to remove orphan upload staging at startup")
+        intake_worker.start()
+        try:
+            yield
+        finally:
+            intake_worker.stop()
+            database.close()
 
     app = FastAPI(
         title="Suno Song Evaluator",
         version=__version__,
         lifespan=lifespan,
+    )
+    app.add_middleware(
+        RequestBodyLimitMiddleware,
+        default_limit_bytes=8 * 1024 * 1024,
+        upload_limit_bytes=(max_upload_total_bytes + max_upload_files * 1024 * 1024),
     )
     app.add_middleware(
         TrustedHostMiddleware,
@@ -272,6 +531,29 @@ def create_app(
             *extra_allowed_hosts,
         ],
     )
+
+    @app.middleware("http")
+    async def prevent_cross_site_writes(request: Request, call_next):
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            if request.headers.get("Sec-Fetch-Site", "").lower() == "cross-site":
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "cross-site state-changing request rejected"},
+                )
+            origin = request.headers.get("Origin")
+            if origin is not None:
+                parsed = urlparse(origin)
+                request_host = request.headers.get("Host", "").lower()
+                if (
+                    parsed.scheme not in {"http", "https"}
+                    or not parsed.netloc
+                    or parsed.netloc.lower() != request_host
+                ):
+                    return JSONResponse(
+                        status_code=403,
+                        content={"detail": "request origin does not match this server"},
+                    )
+        return await call_next(request)
 
     if auth_username is not None and auth_password is not None:
         expected_username = auth_username.encode("utf-8")
@@ -303,9 +585,161 @@ def create_app(
                 )
             return await call_next(request)
 
+    app.add_middleware(SecurityHeadersMiddleware)
     app.state.database = database
     app.state.trusted_media_roots = trusted_media_roots
     app.state.auth_enabled = auth_username is not None
+    app.state.intake_store = intake_store
+    app.state.intake_worker = intake_worker
+    app.state.upload_root = upload_root
+
+    allowed_upload_extensions = {
+        ".wav",
+        ".wave",
+        ".mp3",
+        ".m4a",
+        ".flac",
+        ".ogg",
+        ".aac",
+    }
+    upload_staging_lock = threading.Lock()
+
+    def pending_upload_bytes() -> int:
+        total = 0
+        for path in upload_root.rglob("*"):
+            try:
+                if path.is_file() and not path.is_symlink():
+                    total += path.stat().st_size
+            except FileNotFoundError:
+                continue
+        return total
+
+    def stage_uploads(
+        job_id: str,
+        uploads: list[UploadFile],
+    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        with upload_staging_lock:
+            return stage_uploads_locked(job_id, uploads)
+
+    def stage_uploads_locked(
+        job_id: str,
+        uploads: list[UploadFile],
+    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        if not uploads:
+            raise HTTPException(
+                status_code=422,
+                detail="select at least one audio file",
+            )
+        if len(uploads) > max_upload_files:
+            raise HTTPException(
+                status_code=413,
+                detail=f"at most {max_upload_files} audio files are allowed",
+            )
+        pending_before = pending_upload_bytes()
+        if pending_before >= max_upload_pending_bytes:
+            raise HTTPException(
+                status_code=507,
+                detail="pending upload quota is full; delete failed jobs and retry",
+            )
+        stage_dir = (upload_root / job_id).resolve()
+        if stage_dir.parent != upload_root:
+            raise HTTPException(status_code=500, detail="invalid staging directory")
+        stage_dir.mkdir(mode=0o700)
+        paths: list[str] = []
+        names: list[str] = []
+        digests: set[str] = set()
+        total_bytes = 0
+        try:
+            for index, upload in enumerate(uploads, start=1):
+                original = upload.filename or ""
+                if (
+                    not original
+                    or original != Path(original).name
+                    or any(ord(character) < 32 for character in original)
+                ):
+                    raise HTTPException(
+                        status_code=422, detail="upload filename is not safe"
+                    )
+                suffix = Path(original).suffix.lower()
+                if suffix not in allowed_upload_extensions:
+                    raise HTTPException(
+                        status_code=415,
+                        detail=f"unsupported audio extension: {suffix or '(none)'}",
+                    )
+                content_type = (upload.content_type or "").lower()
+                if content_type and not (
+                    content_type.startswith("audio/")
+                    or content_type == "application/octet-stream"
+                ):
+                    raise HTTPException(
+                        status_code=415,
+                        detail=f"unsupported upload content type: {content_type}",
+                    )
+                destination = stage_dir / (f"{index:02d}-{uuid.uuid4().hex}{suffix}")
+                digest = hashlib.sha256()
+                file_bytes = 0
+                with destination.open("xb") as handle:
+                    while chunk := upload.file.read(1024 * 1024):
+                        file_bytes += len(chunk)
+                        total_bytes += len(chunk)
+                        if file_bytes > max_upload_file_bytes:
+                            raise HTTPException(
+                                status_code=413,
+                                detail=f"{original} exceeds the per-file size limit",
+                            )
+                        if total_bytes > max_upload_total_bytes:
+                            raise HTTPException(
+                                status_code=413,
+                                detail="upload exceeds the total size limit",
+                            )
+                        if pending_before + total_bytes > max_upload_pending_bytes:
+                            raise HTTPException(
+                                status_code=507,
+                                detail="pending upload quota is full",
+                            )
+                        digest.update(chunk)
+                        handle.write(chunk)
+                file_digest = digest.hexdigest()
+                if file_digest in digests:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"duplicate audio content: {original}",
+                    )
+                digests.add(file_digest)
+                try:
+                    _, _, duration = audio_identity(destination)
+                except (OSError, ValueError) as error:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"{original} is not decodable audio",
+                    ) from error
+                if duration > max_audio_duration_s:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=(
+                            f"{original} exceeds the {max_audio_duration_s:g}s "
+                            "duration limit"
+                        ),
+                    )
+                paths.append(str(destination))
+                names.append(original)
+        except Exception:
+            shutil.rmtree(stage_dir, ignore_errors=True)
+            raise
+        finally:
+            for upload in uploads:
+                with contextlib.suppress(Exception):
+                    upload.file.close()
+        return tuple(paths), tuple(names)
+
+    def require_intake_job(job_id: str) -> IntakeJob:
+        try:
+            return intake_store.require(job_id)
+        except KeyError as error:
+            raise HTTPException(
+                status_code=404,
+                detail="intake job not found",
+            ) from error
 
     def trusted_local_path(value: str, *, label: str) -> Path:
         path = expand_path(value)
@@ -721,6 +1155,239 @@ def create_app(
     def projects() -> list[dict]:
         return [item.model_dump(mode="json") for item in database.list_projects()]
 
+    @app.post("/intakes/suno/preview")
+    def preview_suno_intake(request: SunoFetchRequest) -> dict:
+        try:
+            with SunoPublicClient() as client:
+                clips = client.fetch(request.url)
+        except (SunoImportError, httpx.HTTPError, OSError) as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        if len(clips) > 50:
+            raise HTTPException(
+                status_code=422,
+                detail="Suno intake preview is limited to 50 clips",
+            )
+        return {
+            "source_url": request.url,
+            "clips": [clip.model_dump(mode="json") for clip in clips],
+            "count": len(clips),
+            "max_selectable": max_upload_files,
+            "generation_or_publication_performed": False,
+        }
+
+    @app.post("/intakes/suno", status_code=202)
+    def create_suno_intake(request: SunoIntakeRequest) -> dict:
+        if database.get(ProjectRecord, request.project_id) is not None:
+            raise HTTPException(status_code=409, detail="project already exists")
+        if len(request.selected_clip_ids) > max_upload_files:
+            raise HTTPException(
+                status_code=422,
+                detail=f"select at most {max_upload_files} clips",
+            )
+        if len(request.parents) > max_upload_files:
+            raise HTTPException(
+                status_code=422,
+                detail=f"declare at most {max_upload_files} parents",
+            )
+        if len(set(request.selected_clip_ids)) != len(request.selected_clip_ids):
+            raise HTTPException(status_code=422, detail="selected clip IDs repeat")
+        try:
+            intake_request = IntakeRequest(
+                project_id=request.project_id,
+                title=request.title,
+                kind="suno",
+                suno_url=request.url,
+                selected_clip_ids=request.selected_clip_ids,
+                lyrics=request.lyrics,
+                style=request.style,
+                exclude=request.exclude,
+                parents=request.parents,
+                analyze_now=request.analyze_now,
+                allow_local_parent_paths=False,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        try:
+            job = intake_store.create(intake_request)
+        except IntakeConflict as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        intake_worker.notify()
+        return job.public_payload()
+
+    @app.post("/intakes/suno/snapshot", status_code=202)
+    def create_suno_snapshot_intake(request: SunoSnapshotIntakeRequest) -> dict:
+        if database.get(ProjectRecord, request.project_id) is not None:
+            raise HTTPException(status_code=409, detail="project already exists")
+        if len(set(request.selected_clip_ids)) != len(request.selected_clip_ids):
+            raise HTTPException(status_code=422, detail="selected clip IDs repeat")
+        selected_count = len(request.selected_clip_ids) or len(request.snapshots)
+        if selected_count > max_upload_files:
+            raise HTTPException(
+                status_code=422,
+                detail=f"select at most {max_upload_files} clips",
+            )
+        if len(request.parents) > max_upload_files:
+            raise HTTPException(
+                status_code=422,
+                detail=f"declare at most {max_upload_files} parents",
+            )
+        try:
+            for clip in request.snapshots:
+                SunoPublicClient.validate_url(clip.source_url)
+                if clip.audio_url:
+                    SunoPublicClient.validate_audio_url(clip.audio_url)
+        except SunoImportError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        try:
+            intake_request = IntakeRequest(
+                project_id=request.project_id,
+                title=request.title,
+                kind="suno",
+                snapshots=request.snapshots,
+                selected_clip_ids=request.selected_clip_ids,
+                lyrics=request.lyrics,
+                style=request.style,
+                exclude=request.exclude,
+                parents=request.parents,
+                analyze_now=request.analyze_now,
+                allow_local_parent_paths=False,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        try:
+            job = intake_store.create(intake_request)
+        except IntakeConflict as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        intake_worker.notify()
+        return job.public_payload()
+
+    @app.post("/intakes/upload", status_code=202)
+    def create_upload_intake(
+        project_id: Annotated[str, Form(pattern=PROJECT_ID_PATTERN)],
+        title: Annotated[str, Form(min_length=1, max_length=160)],
+        files: Annotated[list[UploadFile], File()],
+        lyrics: Annotated[str | None, Form(max_length=100_000)] = None,
+        style: Annotated[str | None, Form(max_length=10_000)] = None,
+        exclude: Annotated[str | None, Form(max_length=10_000)] = None,
+        analyze_now: Annotated[bool, Form()] = True,
+    ) -> dict:
+        project_id = project_id.strip()
+        title = title.strip()
+        if database.get(ProjectRecord, project_id) is not None:
+            raise HTTPException(status_code=409, detail="project already exists")
+        job_id = f"intake_{uuid.uuid4().hex}"
+        paths, names = stage_uploads(job_id, files)
+        try:
+            intake_request = IntakeRequest(
+                project_id=project_id,
+                title=title,
+                kind="upload",
+                upload_paths=paths,
+                original_filenames=names,
+                lyrics=lyrics,
+                style=style,
+                exclude=exclude,
+                analyze_now=analyze_now,
+            )
+            job = intake_store.create(intake_request, job_id=job_id)
+        except IntakeConflict as error:
+            shutil.rmtree(upload_root / job_id, ignore_errors=True)
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        except ValueError as error:
+            shutil.rmtree(upload_root / job_id, ignore_errors=True)
+            raise HTTPException(status_code=422, detail=str(error)) from error
+        except Exception:
+            shutil.rmtree(upload_root / job_id, ignore_errors=True)
+            raise
+        intake_worker.notify()
+        return job.public_payload()
+
+    @app.get("/intake-jobs")
+    def list_intake_jobs(limit: int = 50) -> list[dict]:
+        if not 1 <= limit <= 100:
+            raise HTTPException(status_code=422, detail="limit must be 1 to 100")
+        return [item.public_payload() for item in intake_store.list(limit=limit)]
+
+    @app.get("/intake-jobs/{job_id}")
+    def get_intake_job(job_id: str) -> dict:
+        return require_intake_job(job_id).public_payload()
+
+    @app.post("/intake-jobs/{job_id}/cancel")
+    def cancel_intake_job(job_id: str) -> dict:
+        job = require_intake_job(job_id)
+        if job.status in {"succeeded", "failed", "canceled"}:
+            raise HTTPException(
+                status_code=409,
+                detail=f"cannot cancel a {job.status} intake job",
+            )
+        return intake_store.request_cancel(job_id).public_payload()
+
+    @app.post("/intake-jobs/{job_id}/retry", status_code=202)
+    def retry_intake_job(job_id: str) -> dict:
+        job = require_intake_job(job_id)
+        project_exists = database.get(ProjectRecord, job.project_id) is not None
+        if (
+            job.kind == "upload"
+            and not project_exists
+            and not all(Path(value).is_file() for value in job.request.upload_paths)
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="staged uploads are no longer available; create a new intake",
+            )
+        try:
+            retried = intake_store.retry(job_id)
+        except IntakeConflict as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        intake_worker.notify()
+        return retried.public_payload()
+
+    @app.delete("/intake-jobs/{job_id}")
+    def delete_intake_job(
+        job_id: str,
+        discard_partial_project: bool = False,
+    ) -> dict:
+        job = require_intake_job(job_id)
+        if job.status not in {"failed", "canceled"}:
+            raise HTTPException(
+                status_code=409,
+                detail="only failed or canceled jobs can be deleted",
+            )
+        project_exists = database.get(ProjectRecord, job.project_id) is not None
+        partial_project = project_exists and not database.list(
+            StoredAnalysisReport,
+            job.project_id,
+        )
+        if partial_project and not discard_partial_project:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "project import already completed; retry the job to finish "
+                    "analysis, or repeat deletion with discard_partial_project=true "
+                    "to abandon the incomplete project"
+                ),
+            )
+        try:
+            intake_store.delete_terminal(
+                job_id,
+                before_delete=lambda current: remove_upload_staging(
+                    current,
+                    upload_root,
+                ),
+                discard_project=partial_project,
+            )
+        except IntakeConflict as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        except OSError as error:
+            raise HTTPException(
+                status_code=500,
+                detail="unable to remove staged upload; job was retained",
+            ) from error
+        if database.get(ProjectRecord, job.project_id) is None:
+            for root in (intake_media_root, report_root):
+                shutil.rmtree(root / project_key(job.project_id), ignore_errors=True)
+        return {"deleted": True, "job_id": job_id}
+
     @app.get("/projects/{project_id}", response_class=HTMLResponse)
     def project_workspace_page(project_id: str) -> str:
         project = database.get(ProjectRecord, project_id)
@@ -790,7 +1457,7 @@ def create_app(
             existing = database.list(ProjectDecisionPolicy, project_id)
             version_number = len(existing) + 1
             policy = ProjectDecisionPolicy(
-                id=f"policy_{slugify(project_id)}_v{version_number}",
+                id=f"policy_{project_key(project_id)}_v{version_number}",
                 project_id=project_id,
                 version=f"v{version_number}",
                 declared_by_user=True,
