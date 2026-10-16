@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:0.11.32-python3.12-trixie-slim@sha256:519357e414a4240af8b3ac657466c20f9d6041b5a3ce999d96fa9d576ef7fd29
+FROM ghcr.io/astral-sh/uv:0.13.1-python3.12-trixie-slim@sha256:e28141cccc682844c7bed0cb7e5b2b4522c1f72f1d5116c7d22710d0d421f7dc
 
 LABEL org.opencontainers.image.title="Suno Song Evaluator" \
       org.opencontainers.image.description="Evidence-first comparison and release support for Suno song candidates" \
