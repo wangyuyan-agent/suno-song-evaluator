@@ -11,7 +11,7 @@ import uvicorn
 from pydantic import ValidationError
 
 from .analyzer import ProjectAnalyzer
-from .api import create_app
+from .api import create_app, validate_tailscale_origin
 from .audio import verify_deterministic_crop
 from .db import Database
 from .enums import Axis, PreservationIntent
@@ -1185,7 +1185,7 @@ def serve(
         bool,
         typer.Option(
             "--allow-remote",
-            help="Permit a non-loopback bind; requires auth and an allowed host",
+            help="Permit a non-loopback bind; requires explicit authentication mode",
         ),
     ] = False,
     allowed_host: Annotated[
@@ -1212,6 +1212,13 @@ def serve(
             ),
         ),
     ] = None,
+    tailscale_origin: Annotated[
+        str | None,
+        typer.Option(
+            "--tailscale-origin",
+            help="Passwordless Serve HTTPS origin; publish only on host loopback",
+        ),
+    ] = None,
 ) -> None:
     local_hosts = {"127.0.0.1", "localhost", "::1"}
     remote_binding = host not in local_hosts
@@ -1223,6 +1230,22 @@ def serve(
         if configured_password_file:
             password_file_value = Path(configured_password_file)
 
+    if tailscale_origin is not None:
+        try:
+            tailscale_origin = validate_tailscale_origin(tailscale_origin)
+        except ValueError as error:
+            raise typer.BadParameter(str(error)) from error
+        from urllib.parse import urlparse
+
+        tailnet_hostname = urlparse(tailscale_origin).hostname
+        if resolved_username is not None or password_file_value is not None:
+            raise typer.BadParameter(
+                "tailscale mode cannot be combined with Basic Auth"
+            )
+        if trusted_hosts and trusted_hosts != (tailnet_hostname,):
+            raise typer.BadParameter("tailscale mode accepts only its exact hostname")
+        trusted_hosts = (tailnet_hostname,)
+
     if remote_binding and not allow_remote:
         raise typer.BadParameter(
             "serve is local-only by default; pass --allow-remote for an explicit "
@@ -1232,7 +1255,11 @@ def serve(
         raise typer.BadParameter(
             "remote deployment requires at least one exact --allowed-host"
         )
-    if remote_binding and (not resolved_username or password_file_value is None):
+    if (
+        remote_binding
+        and tailscale_origin is None
+        and (not resolved_username or password_file_value is None)
+    ):
         raise typer.BadParameter(
             "remote deployment requires --auth-username and --auth-password-file"
         )
@@ -1264,6 +1291,7 @@ def serve(
             extra_allowed_hosts=trusted_hosts,
             auth_username=resolved_username,
             auth_password=auth_password,
+            tailscale_origin=tailscale_origin,
         ),
         host=host,
         port=port,

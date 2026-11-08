@@ -626,6 +626,33 @@ def test_cli_serve_remote_rejects_a_weak_password_file(tmp_path):
     assert "characters" in result.output
 
 
+def test_cli_tailscale_mode_is_explicit_and_passwordless(tmp_path, monkeypatch):
+    captured = {}
+    monkeypatch.delenv("SONG_EVAL_AUTH_USERNAME", raising=False)
+    monkeypatch.delenv("SONG_EVAL_AUTH_PASSWORD_FILE", raising=False)
+    monkeypatch.setattr(
+        "songeval.cli.uvicorn.run",
+        lambda application, **kwargs: captured.update(app=application, **kwargs),
+    )
+    args = [
+        "serve",
+        "--db",
+        str(tmp_path / "tailnet.sqlite"),
+        "--host",
+        "0.0.0.0",
+        "--tailscale-origin",
+        "https://music.example.ts.net:8444",
+    ]
+    assert runner.invoke(app, args).exit_code != 0
+    result = runner.invoke(app, [*args, "--allow-remote"])
+    assert result.exit_code == 0, result.output
+    assert captured["app"].state.auth_enabled is False
+    for extra in (["--auth-username", "admin"], ["--allowed-host", "evil.example"]):
+        assert runner.invoke(app, [*args, "--allow-remote", *extra]).exit_code != 0
+    monkeypatch.setenv("SONG_EVAL_AUTH_USERNAME", "inherited")
+    assert runner.invoke(app, [*args, "--allow-remote"]).exit_code != 0
+
+
 def test_cli_serve_rejects_partial_auth_and_invalid_secret_file(tmp_path):
     missing_file = runner.invoke(
         app,

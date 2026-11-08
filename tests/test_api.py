@@ -121,6 +121,79 @@ def test_production_app_basic_auth_protects_everything_except_health(tmp_path):
         assert authenticated.status_code == 200
 
 
+def test_tailscale_mode_opens_pages_but_keeps_host_and_write_boundaries(tmp_path):
+    origin = "https://music.example.ts.net:8444"
+    service = production_create_app(
+        tmp_path / "tailnet.sqlite", tailscale_origin=origin
+    )
+    with TestClient(service, base_url=origin) as client:
+        assert client.get("/").status_code == 200
+        assert client.get("/projects").status_code == 200
+        assert (
+            client.get("/health", headers={"Host": "127.0.0.1:8765"}).status_code == 200
+        )
+        for host in ["evil.example", "music.example.ts.net:8445", "127.0.0.1:8765"]:
+            assert client.get("/projects", headers={"Host": host}).status_code == 400
+        for bad in ["https://evil.example", "null", "http://music.example.ts.net:8444"]:
+            assert (
+                client.post(
+                    "/manifests/import", json={}, headers={"Origin": bad}
+                ).status_code
+                == 403
+            )
+        for site in ["cross-site", "same-site"]:
+            assert (
+                client.post(
+                    "/manifests/import", json={}, headers={"Sec-Fetch-Site": site}
+                ).status_code
+                == 403
+            )
+        # 合法同源请求确实到达业务验证，空载荷被业务校验拒绝而非认证拦截。
+        assert (
+            client.post(
+                "/manifests/import",
+                json={},
+                headers={"Origin": origin, "Sec-Fetch-Site": "same-origin"},
+            ).status_code
+            == 422
+        )
+        assert (
+            client.get(
+                "/projects", headers={"Authorization": "Basic stale"}
+            ).status_code
+            == 200
+        )
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://music.example.ts.net:8444",
+        "https://music.example.com:8444",
+        "https://music.example.ts.net:8444/",
+        "https://music.example.ts.net:8444?x=1",
+        "https://user@music.example.ts.net:8444",
+        "https://music.example.ts.net:99999",
+    ],
+)
+def test_tailscale_mode_rejects_invalid_origin(tmp_path, origin):
+    with pytest.raises(ValueError, match="origin"):
+        production_create_app(tmp_path / "invalid.sqlite", tailscale_origin=origin)
+
+
+def test_tailscale_mode_rejects_mixed_authentication_and_extra_hosts(tmp_path):
+    for kwargs in [
+        {"auth_username": "admin", "auth_password": "test-only-password"},
+        {"extra_allowed_hosts": ("evil.example",)},
+    ]:
+        with pytest.raises(ValueError, match="tailscale"):
+            production_create_app(
+                tmp_path / "mixed.sqlite",
+                tailscale_origin="https://music.example.ts.net:8444",
+                **kwargs,
+            )
+
+
 def test_basic_auth_parser_rejects_malformed_headers():
     assert _basic_credentials(None) is None
     assert _basic_credentials("Bearer token") is None

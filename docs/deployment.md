@@ -4,8 +4,10 @@ Suno Song Evaluator is local-only by default. A server deployment is an
 explicit mode with four required controls:
 
 1. a non-loopback bind must opt in with `--allow-remote`;
-2. every accepted Host header must be listed exactly with `--allowed-host`;
-3. one administrator username and a password file are required;
+2. every accepted Host must be exact, through `--allowed-host` or the dedicated
+   `--tailscale-origin` setting;
+3. one administrator username and a password file are required unless the
+   dedicated `--tailscale-origin` mode is explicitly selected;
 4. the public endpoint must terminate HTTPS before traffic reaches the app.
 
 The provided Compose stack implements those controls with application-level
@@ -16,9 +18,13 @@ For a private tailnet deployment, `compose.tailscale.yaml` instead publishes the
 app only on host loopback, disables Caddy by profile, and relies on Tailscale
 Serve for tailnet-only HTTPS. Application Basic Auth remains enabled.
 
+Version 0.4.0 also provides standalone `compose.tailnet.yaml` for trusted-device
+access without a Web password. It must not be combined with the base Compose
+file. See the passwordless procedure below; the default remote mode is unchanged.
+
 ## Account model
 
-Version 0.3.0 supports one trusted administrator account. It does not provide
+Version 0.4.0 supports one trusted administrator account. It does not provide
 registration, password recovery, per-project roles, multi-tenant isolation, or
 an audit log. Do not expose one deployment to mutually untrusted users. For
 teams, put an identity-aware proxy in front and keep the application Basic Auth
@@ -50,7 +56,8 @@ deploy/verify-deployment.sh BASE_URL USERNAME PASSWORD_FILE
 
 It expects `/health` to return 200, `/` without credentials to return 401, and
 `/` with credentials to return 200. It does not put the password in a command
-argument or environment variable.
+argument or environment variable. This helper checks Basic Auth deployments;
+do not use its expected 401 result to verify passwordless mode.
 
 ## Native `uv`
 
@@ -144,6 +151,48 @@ UID/GID 10001 with mode `0400`, and makes existing regular files under `audio/`
 group-readable by GID 10001. It never prints the password.
 
 ### Tailscale-only server
+
+#### Passwordless trusted-device mode
+
+Use this only after verifying the Serve port is restricted to trusted devices,
+Funnel is disabled, and no public or LAN application port is published. Everyone
+who can reach this service has the same administrator privileges.
+
+For a new installation, create `.env` with the exact HTTPS origin, for example
+`SONG_EVAL_TAILSCALE_ORIGIN=https://server-name.tailnet.ts.net:8444` (no trailing
+slash). Create the library directory with `sudo install -d -o 10001 -g 10001
+-m 0750 audio`; add only intentionally shared audio with permissions readable
+by UID/GID 10001. The image initializes the named `/data` volume. Existing
+installations retain their current audio permissions and named volume.
+
+```bash
+docker compose -p suno-song-evaluator -f compose.tailnet.yaml config --quiet
+docker compose -p suno-song-evaluator -f compose.tailnet.yaml up --build -d
+sudo tailscale serve --bg --https=8444 http://127.0.0.1:8765
+ss -lnt | grep ':8765'
+tailscale serve status
+curl --fail http://127.0.0.1:8765/health
+curl --fail https://server-name.tailnet.ts.net:8444/projects
+```
+
+Verify a fresh browser context reaches the UI without cookies, a saved key,
+or HTTP credentials. A hostile Origin and a cross-site write must return 403;
+an unrecognized Host must be rejected. Loopback `/health` is the only Host
+exception; normal local requests need the configured external Host including
+its port. The application keeps its Host/Origin and write guards but cannot
+detect whether Serve or Funnel supplied a request: network policy remains a
+deployment responsibility.
+
+When migrating, stop the app and back up its data volume, existing Compose
+files and `.env` before recreating it with the same project name. The standalone
+file retains `suno-song-evaluator_song_eval_data` and the library mount. It does
+not mount the old Web password; retain that protected file for rollback.
+Upstream credentials and optional LLM credentials are separate. To roll back,
+preserve current data, restore the old configuration and image, then recreate
+using `compose.yaml` plus `compose.tailscale.yaml`; never delete the data volume
+or reset unrelated Serve listeners.
+
+#### Basic Auth plus Tailscale
 
 Requirements:
 

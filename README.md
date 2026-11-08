@@ -162,7 +162,25 @@ The repository supports four execution paths:
 | Compose + Tailscale Serve | recommended private VPS deployment | tailnet-only HTTPS |
 | Compose + Caddy | Internet-facing server with real DNS | public HTTPS on 80/443 |
 
-For a private Linux server already joined to your tailnet:
+For a private Linux server already joined to your tailnet, choose one of two
+explicit modes. To let Tailscale own access without a separate Web password,
+use the standalone `compose.tailnet.yaml` (do not combine it with `compose.yaml`):
+
+```bash
+# In .env set SONG_EVAL_TAILSCALE_ORIGIN=https://server.example.ts.net:8444
+# Prepare ./audio and the writable data paths as described in docs/deployment.md.
+docker compose -f compose.tailnet.yaml config --quiet
+docker compose -f compose.tailnet.yaml up --build -d
+sudo tailscale serve --bg --https=8444 http://127.0.0.1:8765
+```
+
+Limit the Serve port to your trusted devices in the tailnet policy, keep Funnel
+disabled, and retain the loopback-only port mapping. The app still validates
+the exact Host, Origin, and cross-site writes. Everyone allowed to reach this
+service can use its single-administrator features. Upstream and optional LLM
+credentials remain independent of Web authentication.
+
+For a second password layer, the existing authenticated deployment remains:
 
 ```bash
 cp .env.example .env
@@ -189,7 +207,7 @@ in process arguments or environment variables.
 The image downloads FFmpeg/ffprobe and libsndfile during build, then reproduces
 Python dependencies from `uv.lock`. Authentication is deliberately a single
 administrator account—there is no registration, RBAC, password recovery, MFA,
-brute-force rate limiting, or multi-tenant isolation in v0.3.0. The `/data`
+brute-force rate limiting, or multi-tenant isolation in v0.4.0. The `/data`
 volume persists SQLite state, intake media, upload retries, generated reports,
 and blind-review media.
 

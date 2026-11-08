@@ -1,0 +1,47 @@
+# Standalone passwordless deployment. Do not combine with compose.yaml.
+# Tailscale Serve + the existing tailnet policy own access; never enable Funnel.
+name: suno-song-evaluator
+
+services:
+  app:
+    build:
+      context: .
+    image: suno-song-evaluator:0.4.0
+    command:
+      - serve
+      - --db
+      - /data/song-eval.sqlite
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8765"
+      - --allow-remote
+      - --tailscale-origin
+      - ${SONG_EVAL_TAILSCALE_ORIGIN:?Set the exact Serve HTTPS origin}
+      - --media-dir
+      - /data/review-media
+      - --library-root
+      - /library
+    environment:
+      TMPDIR: /data/song-eval-uploads
+      SONG_EVAL_LLM_BASE_URL: ${SONG_EVAL_LLM_BASE_URL:-}
+      SONG_EVAL_LLM_MODEL: ${SONG_EVAL_LLM_MODEL:-}
+    volumes:
+      - song_eval_data:/data
+      - type: bind
+        source: ${SONG_EVAL_AUDIO_DIR:-./audio}
+        target: /library
+        read_only: true
+    ports:
+      - "127.0.0.1:${SONG_EVAL_LOOPBACK_PORT:-8765}:8765"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  song_eval_data:

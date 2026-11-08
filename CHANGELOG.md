@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0 - 2026-11-08
+
+- Added explicit passwordless Tailscale Serve mode with an exact HTTPS origin,
+  Host validation, and cross-site write protection.
+- Added standalone `compose.tailnet.yaml`, publishing only to host loopback and
+  retaining the existing project name and data volume. It does not mount a Web
+  password. Existing authenticated Compose deployments remain supported.
+- Kept Basic Auth as the default requirement for remote binding; passwordless
+  mode requires explicit configuration and cannot be mixed with Basic Auth.
+
 ## 0.3.0 - 2026-07-31
 
 - Added first-class Web intake for Suno public links, local audio uploads, saved

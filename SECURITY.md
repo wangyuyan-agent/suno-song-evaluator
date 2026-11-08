@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Security fixes are applied to the latest `0.3.x` release.
+Security fixes are applied to the latest `0.4.x` release.
 
 ## Reporting a vulnerability
 
@@ -17,11 +17,18 @@ private Suno metadata in a public issue.
 
 - Local service mode binds to loopback and trusts only loopback Host headers.
 - Remote binding is rejected unless it is explicitly enabled with an exact
-  allowed Host and a password-file-backed administrator account.
+  allowed Host and a password-file-backed administrator account, or the
+  separately selected `--tailscale-origin` mode.
 - The base Compose deployment publishes only Caddy; the app port remains
   internal. Caddy provides HTTPS and security headers.
 - The private Compose overlay publishes the app only on host loopback and
   relies on Tailscale Serve for tailnet-only HTTPS. It must not use Funnel.
+- The standalone `compose.tailnet.yaml` additionally removes Web Basic Auth.
+  It requires an exact HTTPS `.ts.net` origin, rejects other Host/Origin values
+  and cross-site writes, and cannot be combined with Basic Auth. Its Docker
+  port must remain bound to host loopback; the application cannot attest that
+  a forwarded request actually passed through Tailscale. Restrict the Serve
+  port to trusted devices in the tailnet policy and keep Funnel disabled.
 - The application applies no-store, frame isolation, MIME-sniffing, referrer,
   permissions, and Content Security Policy headers even when Caddy is absent;
   Caddy additionally owns HSTS for public HTTPS.

@@ -394,6 +394,29 @@ class ReleaseDecisionRequest(BaseModel):
     run_id: str | None = None
 
 
+def validate_tailscale_origin(value: str) -> str:
+    parsed = urlparse(value)
+    try:
+        port = parsed.port
+    except ValueError as error:
+        raise ValueError("tailscale origin has an invalid port") from error
+    if (
+        parsed.scheme != "https"
+        or not parsed.hostname
+        or not parsed.hostname.endswith(".ts.net")
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path
+        or parsed.params
+        or parsed.query
+        or parsed.fragment
+        or any(character.isspace() or character in "\\%" for character in value)
+        or value != f"https://{parsed.hostname}" + (f":{port}" if port else "")
+    ):
+        raise ValueError("tailscale origin must be an exact HTTPS .ts.net origin")
+    return value
+
+
 def create_app(
     db_path: str | Path,
     *,
@@ -405,12 +428,21 @@ def create_app(
     extra_allowed_hosts: tuple[str, ...] = (),
     auth_username: str | None = None,
     auth_password: str | None = None,
+    tailscale_origin: str | None = None,
     max_upload_files: int = 24,
     max_upload_file_bytes: int = 512 * 1024 * 1024,
     max_upload_total_bytes: int = 2 * 1024 * 1024 * 1024,
     max_upload_pending_bytes: int = 4 * 1024 * 1024 * 1024,
     max_audio_duration_s: float = 1800.0,
 ) -> FastAPI:
+    if tailscale_origin is not None:
+        tailscale_origin = validate_tailscale_origin(tailscale_origin)
+        tailnet_hostname = urlparse(tailscale_origin).hostname
+        if auth_username is not None or auth_password is not None:
+            raise ValueError("tailscale mode cannot be combined with Basic Auth")
+        if extra_allowed_hosts and extra_allowed_hosts != (tailnet_hostname,):
+            raise ValueError("tailscale mode accepts only its exact hostname")
+        extra_allowed_hosts = (tailnet_hostname,)
     if (auth_username is None) != (auth_password is None):
         raise ValueError("auth_username and auth_password must be configured together")
     if auth_username is not None:
@@ -554,6 +586,34 @@ def create_app(
                         content={"detail": "request origin does not match this server"},
                     )
         return await call_next(request)
+
+    if tailscale_origin is not None:
+        tailnet_authority = urlparse(tailscale_origin).netloc
+
+        @app.middleware("http")
+        async def require_tailnet_request(request: Request, call_next):
+            # 外部认证由 Serve 与 tailnet policy 承担；部署必须只发布宿主回环端口。
+            # 不用 Forwarded/X-Forwarded-Host 等客户端可控头扩展信任范围。
+            host = request.headers.get("Host", "")
+            local_health = request.url.path == "/health" and (
+                host.split(":", 1)[0] in {"127.0.0.1", "localhost"}
+                or host == "[::1]"
+                or host.startswith("[::1]:")
+            )
+            if host != tailnet_authority and not local_health:
+                return JSONResponse(status_code=400, content={"detail": "invalid host"})
+            origin = request.headers.get("Origin")
+            if origin is not None and origin != tailscale_origin:
+                return JSONResponse(
+                    status_code=403, content={"detail": "invalid origin"}
+                )
+            if request.method not in {"GET", "HEAD", "OPTIONS"} and request.headers.get(
+                "Sec-Fetch-Site", ""
+            ) not in {"", "none", "same-origin"}:
+                return JSONResponse(
+                    status_code=403, content={"detail": "cross-site write"}
+                )
+            return await call_next(request)
 
     if auth_username is not None and auth_password is not None:
         expected_username = auth_username.encode("utf-8")
